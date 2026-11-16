@@ -4,10 +4,50 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>OdontoVale · Consultorio Dra. Valeria</title>
-<meta name="theme-color" content="#FFFFFF">
+<meta name="theme-color" content="#F8F3EC">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="OdontoVale">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2216%22 fill=%22%238C6A4F%22/%3E%3Cpath d=%22M20 18c-5 0-8 4-8 10 0 8 4 12 6 20 1 4 5 4 6 0l2-9c1-3 6-3 7 0l2 9c1 4 5 4 6 0 2-8 6-12 6-20 0-6-3-10-8-10-4 0-6 2-9 2s-5-2-10-2z%22 fill=%22%23fff%22/%3E%3C/svg%3E">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="icons/favicon.svg">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="apple-touch-startup-image" media="(device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="icons/splash-1320x2868.png">
+<link rel="apple-touch-startup-image" media="(device-width: 402px) and (device-height: 874px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="icons/splash-1206x2622.png">
+<link rel="apple-touch-startup-image" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="icons/splash-1290x2796.png">
+<link rel="apple-touch-startup-image" media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="icons/splash-1179x2556.png">
+<link rel="apple-touch-startup-image" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="icons/splash-1284x2778.png">
+<link rel="apple-touch-startup-image" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="icons/splash-1170x2532.png">
+<link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="icons/splash-1125x2436.png">
+<link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="icons/splash-1242x2688.png">
+<link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="icons/splash-828x1792.png">
+<link rel="apple-touch-startup-image" media="(device-width: 360px) and (device-height: 780px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="icons/splash-1080x2340.png">
+<link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="icons/splash-750x1334.png">
+<link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="icons/splash-1242x2208.png">
+<link rel="apple-touch-startup-image" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="icons/splash-640x1136.png">
+<style>
+/* Pantalla de inicio: va primero para que nunca se vea un fondo negro */
+html{background:#F8F3EC}
+#splash{position:fixed;inset:0;z-index:100;background:#F8F3EC;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;transition:opacity .45s ease}
+#splash.out{opacity:0;pointer-events:none}
+#splash .tile{width:96px;height:96px;border-radius:26px;background:#8C6A4F;position:relative;overflow:hidden;box-shadow:0 10px 26px rgba(140,106,79,.28);animation:sp-pop .6s cubic-bezier(.2,1.4,.4,1) both}
+#splash .tile svg.t{width:96px;height:96px;display:block}
+#splash .stroke{stroke-dasharray:150;stroke-dashoffset:150;animation:sp-draw .65s .3s ease forwards}
+#splash .fill{opacity:0;animation:sp-fade .3s .9s ease forwards}
+#splash .shine{position:absolute;top:-20%;left:-60%;width:40%;height:140%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.8),transparent);transform:skewX(-20deg);animation:sp-shine .6s 1.2s ease-in-out both}
+#splash .spark{position:absolute;top:13px;right:13px;width:12px;height:12px;opacity:0;animation:sp-spark .6s 1.6s ease both}
+#splash .nm{font-family:"Outfit","Manrope",system-ui,sans-serif;font-weight:600;font-size:28px;letter-spacing:-.01em;color:#33291F;height:36px}
+#splash .nm span{display:inline-block;opacity:0;animation:sp-up .4s ease forwards}
+#splash .sb{font-family:"Manrope",system-ui,sans-serif;font-size:13px;color:#86776A;font-weight:600;margin-top:-10px;opacity:0;animation:sp-up .5s 2.05s ease forwards}
+@keyframes sp-pop{from{transform:scale(.4);opacity:0}to{transform:none;opacity:1}}
+@keyframes sp-draw{to{stroke-dashoffset:0}}
+@keyframes sp-fade{to{opacity:1}}
+@keyframes sp-shine{from{left:-60%}to{left:130%}}
+@keyframes sp-spark{0%{opacity:0;transform:scale(.2) rotate(0)}50%{opacity:1;transform:scale(1) rotate(45deg)}100%{opacity:0;transform:scale(.6) rotate(90deg)}}
+@keyframes sp-up{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){#splash *{animation-duration:.01s!important;animation-delay:0s!important}}
+</style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -224,6 +264,15 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);
 </style>
 </head>
 <body>
+<div id="splash" aria-hidden="true">
+  <div class="tile"><svg class="t" viewBox="0 0 64 64"><g transform="translate(0 -2.5)"><path class="stroke" d="M32 20C29 20 27 18 23 18C18 18 15 22 15 28C15 36 19 40 21 48C22 52 26 52 27 48L29 41C30 38 34 38 35 41L37 48C38 52 42 52 43 48C45 40 49 36 49 28C49 22 46 18 41 18C37 18 35 20 32 20Z" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><path class="fill" d="M32 20C29 20 27 18 23 18C18 18 15 22 15 28C15 36 19 40 21 48C22 52 26 52 27 48L29 41C30 38 34 38 35 41L37 48C38 52 42 52 43 48C45 40 49 36 49 28C49 22 46 18 41 18C37 18 35 20 32 20Z" fill="#fff"/></g></svg><span class="shine"></span><svg class="spark" viewBox="0 0 12 12"><path d="M6 0L7 5 12 6 7 7 6 12 5 7 0 6 5 5Z" fill="#fff"/></svg></div>
+  <div class="nm"><span style="animation-delay:1.45s">O</span><span style="animation-delay:1.50s">d</span><span style="animation-delay:1.55s">o</span><span style="animation-delay:1.60s">n</span><span style="animation-delay:1.65s">t</span><span style="animation-delay:1.70s">o</span><span style="animation-delay:1.75s">V</span><span style="animation-delay:1.80s">a</span><span style="animation-delay:1.85s">l</span><span style="animation-delay:1.90s">e</span></div>
+  <div class="sb">Consultorio Dra. Valeria</div>
+</div>
+<script>
+(function(){var s=document.getElementById("splash");var reduce=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
+setTimeout(function(){s.classList.add("out");var m=document.querySelector('meta[name="theme-color"]');if(m)m.content="#FFFFFF";setTimeout(function(){s.remove();},500);},reduce?600:2700);})();
+</script>
 <div id="app"><div class="loading">Cargando tu consultorio…</div></div>
 
 <nav class="tabbar" aria-label="Secciones">
