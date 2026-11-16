@@ -232,7 +232,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);
     <a href="#calendario" data-nav="calendario"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>Calendario</a>
     <button class="fab" id="fab" aria-label="Nueva cita"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
     <a href="#pacientes" data-nav="pacientes"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.5" r="3.5"/><path d="M2.5 20c.6-3.4 3.2-5.5 6.5-5.5s5.9 2.1 6.5 5.5"/><path d="M16 5.2a3.3 3.3 0 0 1 0 6.6M18 14.8c1.9.7 3.1 2.4 3.5 5.2"/></svg>Pacientes</a>
-    <button class="t" id="navNuevoPac"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="8.5" r="3.5"/><path d="M3.5 20c.6-3.4 3.2-5.5 6.5-5.5 1.5 0 2.9.4 4 1.2M18 14v6M15 17h6"/></svg>Nuevo</button>
+    <a href="#ajustes" data-nav="ajustes"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Ajustes</a>
   </div>
 </nav>
 
@@ -258,6 +258,7 @@ const age = nac => { if(!nac) return null; const b = parse(nac), t = new Date();
 const minutes = h => { const [a,b] = (h||"0:0").split(":").map(Number); return a*60+b; };
 const norm = s => (s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();
 const ICON = {
+  addUser:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><circle cx="10" cy="8.5" r="3.5"/><path d="M3.5 20c.6-3.4 3.2-5.5 6.5-5.5 1.5 0 2.9.4 4 1.2M18 14v6M15 17h6"/></svg>',
   back:'<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
   close:'<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
   search:'<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4-4"/></svg>',
@@ -350,7 +351,7 @@ function ultimaVisita(pid){ const hoy = todayStr(); return citasPaciente(pid).fi
 function readHash(){
   const h = location.hash.replace("#","");
   if (h.startsWith("paciente-")){ const id = h.slice(9); if (UI.route !== "paciente" || UI.pid !== id){ UI.tab = "datos"; } UI.route = "paciente"; UI.pid = id; }
-  else if (["hoy","calendario","pacientes"].includes(h)) UI.route = h;
+  else if (["hoy","calendario","pacientes","ajustes"].includes(h)) UI.route = h;
   else UI.route = "hoy";
 }
 window.addEventListener("hashchange", ()=>{ readHash(); render(); window.scrollTo(0,0); });
@@ -367,6 +368,7 @@ function render(){
   else if (UI.route === "calendario") html = vCal();
   else if (UI.route === "pacientes") html = vPacientes();
   else if (UI.route === "paciente") html = vPerfil();
+  else if (UI.route === "ajustes") html = vAjustes();
   app.innerHTML = html;
   if (fid){ const el = document.getElementById(fid); if (el && el.focus){ el.focus(); try{ el.setSelectionRange(sel, sel); }catch(e){} } }
 }
@@ -420,7 +422,7 @@ function vHoy(){
     <div class="daynav"><button data-dia="-1" aria-label="Día anterior">‹</button>${esHoy?"":`<button data-dia="0">Hoy</button>`}<button data-dia="1" aria-label="Día siguiente">›</button></div></div>
   <div class="timeline">${lista.length ? lista.map(c=>citaCard(c,{next: !actual && siguiente && c.id===siguiente.id && esHoy})).join("") :
     `<div class="emptybox"><b>No hay citas este día</b>Toca el botón + para agendar una.</div>`}</div>
-  ${!Object.keys(S.pacientes).length ? `<div class="footnote"><button class="btn soft sm" data-act="demo">Cargar pacientes de ejemplo</button></div>`:""}`;
+`;
 }
 
 function vCal(){
@@ -456,14 +458,28 @@ function vCal(){
 function vPacientes(){
   const t = norm(UI.pq).trim();
   const ps = pacientesOrden().filter(p => !t || norm(p.nombre).includes(t) || (p.dni||"").includes(t));
-  const hayDemo = Object.values(S.pacientes).some(p=>p.demo);
   return `${notices()}
-  <div class="top"><div><div class="eyebrow">${Object.keys(S.pacientes).length} registrados</div><h1>Pacientes</h1></div><button class="btn primary sm" data-act="nuevoPac">+ Nuevo</button></div>
+  <div class="top"><div><div class="eyebrow">${Object.keys(S.pacientes).length} registrados</div><h1>Pacientes</h1></div><button class="btn primary sm" data-act="nuevoPac">${ICON.addUser}Nuevo</button></div>
   <div class="search">${ICON.search}<input id="pq" type="search" placeholder="Filtrar por nombre o DNI" value="${esc(UI.pq)}" autocomplete="off" aria-label="Filtrar pacientes"></div>
   <div class="plist">${ps.length ? ps.map(p => { const n = proximaCita(p.id); return `<button class="prow" data-open="${p.id}"><span class="avatar">${esc(initials(p.nombre))}</span><span class="grow"><div class="nombre">${esc(p.nombre)}</div><div class="sub">${n?`Próxima cita: ${fmtShort(n.fecha)} · ${esc(n.motivo||"")}`:(p.dni?"DNI "+esc(p.dni):"Sin próxima cita")}</div></span>${ICON.chev}</button>`; }).join("")
-   : `<div class="emptybox"><b>${t?"Sin resultados":"Aún no hay pacientes"}</b>${t?"Prueba con otro nombre.":"Registra el primero con “+ Nuevo”."}</div>${!Object.keys(S.pacientes).length?`<div class="footnote"><button class="btn soft sm" data-act="demo">Cargar pacientes de ejemplo</button></div>`:""}`}</div>
-  ${hayDemo ? `<div class="footnote"><button class="link" data-act="quitarDemo">Quitar datos de ejemplo</button></div>`:""}
-  ${S.mode==="local" ? `<div class="card" style="margin-top:22px;background:var(--sand);border-color:var(--sand)"><h3 style="font-size:16px;margin-bottom:4px">Copia de seguridad</h3><div class="sub" style="margin-bottom:12px">Los datos se guardan en este celular. Descarga una copia cada cierto tiempo y guárdala en Drive o WhatsApp; con ella puedes recuperarlos o pasarlos a otro equipo.</div><div class="btnrow"><button class="btn sm primary" data-act="exportar">Descargar copia</button><button class="btn sm" data-act="importar">Restaurar copia</button></div><input type="file" id="importFile" accept=".json,application/json" hidden>${S.ultimaCopia?`<div class="sub" style="margin-top:8px">Última copia: ${esc(S.ultimaCopia)}</div>`:""}</div>`:""}`;
+   : `<div class="emptybox"><b>${t?"Sin resultados":"Aún no hay pacientes"}</b>${t?"Prueba con otro nombre.":"Registra el primero con el botón Nuevo."}</div>`}</div>
+`;
+}
+
+function vAjustes(){
+  const np = Object.keys(S.pacientes).length, nc = Object.keys(S.citas).length;
+  const hayDemo = Object.values(S.pacientes).some(p=>p.demo);
+  const local = S.mode === "local";
+  return `${notices()}
+  <div class="top"><div><div class="eyebrow">OdontoVale</div><h1>Configuración</h1></div></div>
+  <div class="stack" style="gap:14px">
+    <div class="card"><h3 style="font-size:16px;margin-bottom:4px">Tus datos</h3>
+      <div class="sub" style="margin-bottom:12px">${local ? "Se guardan en este celular, dentro del navegador." : "Se guardan en tu cuenta de Claude."}</div>
+      <div class="monthstats" style="margin:0"><div class="stat"><b class="num">${np}</b><span>pacientes</span></div><div class="stat"><b class="num">${nc}</b><span>citas</span></div></div></div>
+    ${local ? `<div class="card"><h3 style="font-size:16px;margin-bottom:4px">Copia de seguridad</h3><div class="sub" style="margin-bottom:12px">Descarga una copia cada cierto tiempo y guárdala en Drive o WhatsApp. Con ella recuperas tus datos si cambias de celular o se borra el navegador.</div><div class="btnrow"><button class="btn sm primary" data-act="exportar">Descargar copia</button><button class="btn sm" data-act="importar">Restaurar copia</button></div><input type="file" id="importFile" accept=".json,application/json" hidden><div class="sub" style="margin-top:10px">${S.ultimaCopia?`Última copia: ${esc(S.ultimaCopia)}`:"Aún no has descargado ninguna copia."}</div></div>` : ""}
+    <div class="card"><h3 style="font-size:16px;margin-bottom:4px">Datos de ejemplo</h3><div class="sub" style="margin-bottom:12px">Pacientes y citas ficticios para probar la app. Al quitarlos, tus registros reales se quedan.</div>
+      ${hayDemo ? `<button class="btn sm danger" data-act="quitarDemo">Quitar datos de ejemplo</button>` : `<button class="btn sm soft" data-act="demo">Cargar datos de ejemplo</button>`}</div>
+  </div>`;
 }
 
 /* ----- perfil ----- */
@@ -764,7 +780,6 @@ document.addEventListener("click", e => {
   else if (a==="quitarDemo") confirmSheet("Quitar datos de ejemplo", "Se borrarán los pacientes y citas de ejemplo. Tus registros reales se quedan.", "Quitar", () => { Object.entries(S.citas).forEach(([id,c])=>{ if(c.demo) removeDoc("citas",id); }); Object.entries(S.pacientes).forEach(([id,p])=>{ if(p.demo) removeDoc("pacientes",id); }); toast("Datos de ejemplo quitados"); });
 });
 $("#fab").onclick = () => formCita({pacienteId: UI.route==="paciente" ? UI.pid : "", fecha: UI.route==="calendario" ? UI.calSel : (UI.route==="hoy" ? UI.dia : todayStr())});
-$("#navNuevoPac").onclick = () => formPaciente(null);
 
 /* ---------- copia de seguridad (modo local) ---------- */
 function exportar(){
