@@ -210,23 +210,52 @@ h1,h2,h3{font-family:var(--display);font-weight:600;margin:0;text-wrap:balance;l
 .mini{border:0;background:var(--sand);border-radius:9px;height:30px;padding:0 10px;font-size:12px;font-weight:700;color:var(--accent)}
 
 /* odontograma */
-.tools{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
-.tool{height:34px;padding:0 11px;border-radius:99px;border:1px solid var(--line);background:var(--bg);font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px}
-.tool i{width:12px;height:12px;border-radius:3px;display:inline-block}
-.tool.on{border-color:var(--ink);background:var(--ink);color:#fff}
-.odo{overflow-x:auto;background:var(--sand);border-radius:var(--r);padding:14px 10px;-webkit-overflow-scrolling:touch}
-.arch{display:flex;gap:3px;width:max-content;margin:0 auto}
-.arch .mid{width:2px;background:var(--beige);margin:0 4px;border-radius:2px}
-.tooth{display:flex;flex-direction:column;align-items:center;gap:3px}
-.tooth .n{font-size:11px;font-weight:700;color:var(--muted)}
-.tooth svg{width:38px;height:38px;display:block}
-.tooth svg .s{fill:#fff;stroke:#BFAF9C;stroke-width:1;cursor:pointer}
-.tooth svg .s.caries{fill:var(--red)}
-.tooth svg .s.obt{fill:var(--blue)}
+.seg{display:grid;grid-template-columns:1fr 1fr;background:var(--sand);border-radius:12px;padding:3px;margin-bottom:12px}
+.seg button{height:36px;border:0;border-radius:10px;background:none;font-weight:700;font-size:13px;color:var(--muted);display:flex;align-items:center;justify-content:center;gap:6px}
+.seg button.on{background:var(--bg);color:var(--ink);box-shadow:0 1px 4px rgba(60,40,20,.1)}
+.seg .cnt{background:var(--accent);color:#fff;border-radius:99px;font-size:10px;padding:1px 6px}
+.odohead{display:flex;justify-content:flex-end;margin-bottom:8px}
+.dent{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.dent button{height:30px;padding:0 11px;border:0;background:var(--bg);font-size:12px;font-weight:700;color:var(--muted)}
+.dent button+button{border-left:1px solid var(--line)}
+.dent button.on{background:var(--accent-soft);color:var(--accent)}
+.odo{background:var(--sand);border-radius:var(--r);padding:10px 4px;margin:0 -10px}
+.ogrid{display:grid;gap:1px;align-items:end}
+.ogrid.g16{grid-template-columns:repeat(8,minmax(0,1fr)) 5px repeat(8,minmax(0,1fr))}
+.ogrid.g10{grid-template-columns:repeat(5,minmax(0,1fr)) 6px repeat(5,minmax(0,1fr));max-width:330px;margin:0 auto;gap:4px}
+.ogrid.dec{margin-top:6px}
+.ogrid .mid{align-self:stretch;width:2px;background:var(--beige);border-radius:2px;justify-self:center}
+.tooth{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0;cursor:pointer;border-radius:5px;padding:1px 0}
+.tooth .n{font-size:9px;font-weight:700;color:var(--muted);line-height:1}
+.odo.big .tooth .n{font-size:11px}
+.tooth svg{width:100%;max-width:40px;height:auto;aspect-ratio:1;display:block}
+.tooth svg .s{fill:#fff;stroke:#BFAF9C;stroke-width:1.4}
+.tooth svg .s.caries,.bigtooth svg .s.caries{fill:var(--red)}
+.tooth svg .s.obt,.bigtooth svg .s.obt{fill:var(--blue)}
 .tooth.ausente svg .s{fill:#F3EFEA}
-.archgap{height:14px}
+.tooth.hit{background:var(--accent-soft);outline:1.5px solid var(--accent)}
+.archgap{height:12px}
 .hint{font-size:12px;color:var(--muted);text-align:center;margin-top:8px}
-.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--muted);margin:10px 0 14px}
+.legend{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 14px;font-size:12px;color:var(--muted);margin:6px 0 14px}
+.sw{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.hallbtn{background:var(--bg);width:100%;align-items:center}
+.bigtooth{position:relative;width:190px;height:190px;margin:4px auto 0;padding:20px}
+.bigtooth svg{width:150px;height:150px;display:block}
+.bigtooth svg .s{fill:#fff;stroke:#BFAF9C;stroke-width:.8;cursor:pointer}
+.bigtooth .fl{position:absolute;font-size:12px;font-weight:700;color:var(--muted)}
+.fl.t{top:0;left:50%;transform:translateX(-50%)}.fl.b{bottom:0;left:50%;transform:translateX(-50%)}.fl.l{left:2px;top:50%;transform:translateY(-50%)}.fl.r{right:2px;top:50%;transform:translateY(-50%)}
+.tchip{display:flex;align-items:center;gap:6px}.tchip i{width:11px;height:11px;border-radius:3px;border:1px solid #BFAF9C}
+.chg{font-size:14px;font-weight:600;margin-top:3px;padding-left:12px;position:relative}
+.chg::before{content:"";position:absolute;left:0;top:7px;width:6px;height:6px;border-radius:50%;background:var(--muted)}
+.chg.ok{color:var(--ok)}.chg.ok::before{background:var(--ok)}
+.chg.bad{color:var(--red)}.chg.bad::before{background:var(--red)}
+.fechas{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 -18px 10px;padding:0 18px}
+.fechas::-webkit-scrollbar{display:none}
+.fechas button{flex:none;width:58px;height:58px;border-radius:14px;border:1px solid var(--line);background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1}
+.fechas button b{font-family:var(--display);font-size:19px}
+.fechas button span{font-size:11px;color:var(--muted);font-weight:700}
+.fechas button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.fechas button.on span{color:#fff}
 
 /* hojas */
 .scrim{position:fixed;inset:0;background:rgba(40,28,18,.32);z-index:50;display:flex;align-items:flex-end;justify-content:center;animation:fade .18s ease}
@@ -286,7 +315,25 @@ setTimeout(function(){s.classList.add("out");var m=document.querySelector('meta[
 </nav>
 
 <script>
-"use strict";
+/* Actualización automática: al abrir o volver a la app, si hay una versión nueva se recarga sola */
+const APP_VERSION = "2026.11.15-2129";
+let recargaPendiente = false;
+async function buscarActualizacion(){
+  if (!/^https?:$/.test(location.protocol) || (window.claude && typeof window.claude.use === "function")) return;
+  try {
+    const r = await fetch("version.json?t=" + Date.now(), {cache:"no-store"});
+    if (!r.ok) return;
+    const v = (await r.json()).version;
+    if (!v || v === APP_VERSION) return;
+    const k = "ov-actualizado-" + v;
+    try { if (sessionStorage.getItem(k)) return; sessionStorage.setItem(k, "1"); } catch(e){}
+    await fetch(location.pathname, {cache:"reload"}).catch(()=>{});
+    if (document.querySelector(".scrim")) recargaPendiente = true; else location.reload();
+  } catch(e){}
+}
+buscarActualizacion();
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") buscarActualizacion(); });
+
 /* ---------- utilidades ---------- */
 const $ = (s, el=document) => el.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -319,7 +366,7 @@ const ESTADOS = {programada:["Programada",""], atendida:["Atendida","ok"], no_as
 
 /* ---------- almacenamiento ---------- */
 const S = { pacientes:{}, citas:{}, ready:false, mode:null, offline:false };
-const UI = { route:"hoy", dia:todayStr(), mes:todayStr().slice(0,8)+"01", calSel:todayStr(), tab:"datos", tool:"caries", q:"", pq:"" };
+const UI = { route:"hoy", dia:todayStr(), mes:todayStr().slice(0,8)+"01", calSel:todayStr(), tab:"datos", odoModo:"actual", odoFecha:"", q:"", pq:"" };
 let DB = null;
 const PATH = { pacientes:"clinica/main/pacientes", citas:"clinica/main/citas" };
 const LSKEY = "consultorio-valeria-v1";
@@ -399,7 +446,7 @@ function ultimaVisita(pid){ const hoy = todayStr(); return citasPaciente(pid).fi
 /* ---------- router ---------- */
 function readHash(){
   const h = location.hash.replace("#","");
-  if (h.startsWith("paciente-")){ const id = h.slice(9); if (UI.route !== "paciente" || UI.pid !== id){ UI.tab = "datos"; } UI.route = "paciente"; UI.pid = id; }
+  if (h.startsWith("paciente-")){ const id = h.slice(9); if (UI.route !== "paciente" || UI.pid !== id){ UI.tab = "datos"; UI.odoModo = "actual"; UI.odoFecha = ""; } UI.route = "paciente"; UI.pid = id; }
   else if (["hoy","calendario","pacientes","ajustes"].includes(h)) UI.route = h;
   else UI.route = "hoy";
 }
@@ -567,12 +614,24 @@ function tDatos(p){
 /* odontograma: notación FDI */
 const UP = [18,17,16,15,14,13,12,11,21,22,23,24,25,26,27,28];
 const LOW = [48,47,46,45,44,43,42,41,31,32,33,34,35,36,37,38];
-const TOOLS = [["caries","Caries","s","var(--red)"],["obt","Obturación","s","var(--blue)"],["endo","Endodoncia","t","var(--blue)"],["corona","Corona","t","var(--blue)"],["ext","Extracción indicada","t","var(--red)"],["ausente","Ausente","t","#9C8F82"],["borrar","Borrar","x","#fff"]];
+const UPD = [55,54,53,52,51,61,62,63,64,65];
+const LOWD = [85,84,83,82,81,71,72,73,74,75];
+const CARA_T = [["caries","Caries","var(--red)"],["obt","Obturación","var(--blue)"],["sano","Sana","#fff"]];
+const EST_T = [["endo","Endodoncia"],["corona","Corona"],["ext","Extracción indicada"],["ausente","Ausente"]];
+const EST_N = {endo:"endodoncia",corona:"corona",ext:"extracción indicada",ausente:"ausente"};
+const CARA_N = {caries:"caries",obt:"obturación"};
 const CARAS = {V:"vestibular",L:"lingual/palatina",M:"mesial",D:"distal",O:"oclusal/incisal"};
+const DENT = [["adulto","Adulto"],["mixto","Mixto"],["nino","Niño"]];
 function geo(n){
-  const q = Math.floor(n/10), upper = q===1||q===2;
-  const right = (q===1||q===4) ? "M" : "D", left = right==="M" ? "D" : "M";
+  const q = Math.floor(n/10), upper = [1,2,5,6].includes(q);
+  const right = [1,4,5,8].includes(q) ? "M" : "D", left = right==="M" ? "D" : "M";
   return {top: upper?"V":"L", bottom: upper?"L":"V", left, right};
+}
+function nombrePieza(n){
+  n = +n; const q = Math.floor(n/10), d = n%10, dec = q>=5;
+  const tipo = dec ? ["","incisivo central","incisivo lateral","canino","primer molar","segundo molar"][d] : ["","incisivo central","incisivo lateral","canino","primer premolar","segundo premolar","primer molar","segundo molar","tercer molar"][d];
+  const lado = [1,5].includes(q)?"superior derecho":[2,6].includes(q)?"superior izquierdo":[3,7].includes(q)?"inferior izquierdo":"inferior derecho";
+  return `${tipo} ${lado}${dec?" (deciduo)":""}`;
 }
 function toothSVG(n, t){
   const g = geo(n), c = (t&&t.caras)||{}, e = (t&&t.estado)||{};
@@ -580,8 +639,8 @@ function toothSVG(n, t){
   let over = "";
   if (e.endo) over += `<line x1="20" y1="-2" x2="20" y2="42" stroke="var(--blue)" stroke-width="3"/>`;
   if (e.corona) over += `<circle cx="20" cy="20" r="18.5" fill="none" stroke="var(--blue)" stroke-width="2.5"/>`;
-  if (e.ext) over += `<path d="M4 4L36 36M36 4L4 36" stroke="var(--red)" stroke-width="3" stroke-linecap="round"/>`;
-  if (e.ausente) over += `<path d="M4 4L36 36M36 4L4 36" stroke="var(--blue)" stroke-width="3" stroke-linecap="round"/>`;
+  if (e.ext) over += `<path d="M4 4L36 36M36 4L4 36" stroke="var(--red)" stroke-width="3.5" stroke-linecap="round"/>`;
+  if (e.ausente) over += `<path d="M4 4L36 36M36 4L4 36" stroke="var(--blue)" stroke-width="3.5" stroke-linecap="round"/>`;
   return `<svg viewBox="-1 -1 42 42" aria-hidden="true">
     <polygon class="${cl(g.top)}" data-s="${g.top}" points="0,0 40,0 27,13 13,13"/>
     <polygon class="${cl(g.bottom)}" data-s="${g.bottom}" points="0,40 40,40 27,27 13,27"/>
@@ -590,23 +649,140 @@ function toothSVG(n, t){
     <rect class="${cl("O")}" data-s="O" x="13" y="13" width="14" height="14"/>
     <g pointer-events="none">${over}</g></svg>`;
 }
-function tOdo(p){
-  const o = p.odontograma||{};
-  const tooth = (n, numFirst) => `<div class="tooth ${o[n]?.estado?.ausente?"ausente":""}" data-t="${n}" role="button" aria-label="Pieza ${n}">${numFirst?`<span class="n">${n}</span>`:""}${toothSVG(n,o[n])}${numFirst?"":`<span class="n">${n}</span>`}</div>`;
-  const row = (arr, numFirst) => `<div class="arch">${arr.slice(0,8).map(n=>tooth(n,numFirst)).join("")}<div class="mid"></div>${arr.slice(8).map(n=>tooth(n,numFirst)).join("")}</div>`;
-  const hall = [];
-  Object.keys(o).sort().forEach(n => { const t = o[n]; const parts = [];
-    const cs = Object.entries(t.caras||{}); const car = cs.filter(([,v])=>v==="caries").map(([k])=>k), ob = cs.filter(([,v])=>v==="obt").map(([k])=>k);
-    if (car.length) parts.push(`caries ${car.join("")}`); if (ob.length) parts.push(`obturación ${ob.join("")}`);
-    const e = t.estado||{}; if(e.endo) parts.push("endodoncia"); if(e.corona) parts.push("corona"); if(e.ext) parts.push("extracción indicada"); if(e.ausente) parts.push("ausente");
-    if (parts.length) hall.push(`<div class="item"><div class="grow"><span class="t num">Pieza ${n}</span> <span class="d">${parts.join(" · ")}</span></div></div>`);
+function denticionDe(p){
+  if (p.denticion) return p.denticion;
+  const a = age(p.nacimiento);
+  return a===null ? "adulto" : a < 6 ? "nino" : a < 13 ? "mixto" : "adulto";
+}
+const vacio = t => !t || (!Object.keys(t.caras||{}).length && !Object.keys(t.estado||{}).length);
+const mismo = (a,b) => JSON.stringify(a||null) === JSON.stringify(b||null);
+/* Dibuja el odontograma completo, ajustado al ancho (sin deslizar) */
+function odoGrid(o, dent, opts={}){
+  const mark = opts.mark || new Set();
+  const cell = (n, numTop) => `<div class="tooth ${o[n]?.estado?.ausente?"ausente":""} ${mark.has(String(n))?"hit":""}" ${opts.ro?"":`data-t="${n}" role="button" tabindex="0"`} aria-label="Pieza ${n}">${numTop?`<span class="n">${n}</span>`:""}${toothSVG(n,o[n])}${numTop?"":`<span class="n">${n}</span>`}</div>`;
+  const blank = '<div></div>';
+  const perm = (arr, top) => arr.slice(0,8).map(n=>cell(n,top)).join("") + '<div class="mid"></div>' + arr.slice(8).map(n=>cell(n,top)).join("");
+  const decAligned = (arr, top) => blank.repeat(3) + arr.slice(0,5).map(n=>cell(n,top)).join("") + '<div class="mid"></div>' + arr.slice(5).map(n=>cell(n,top)).join("") + blank.repeat(3);
+  const dec = (arr, top) => arr.slice(0,5).map(n=>cell(n,top)).join("") + '<div class="mid"></div>' + arr.slice(5).map(n=>cell(n,top)).join("");
+  let rows;
+  if (dent === "nino") rows = `<div class="ogrid g10">${dec(UPD,true)}</div><div class="archgap"></div><div class="ogrid g10">${dec(LOWD,false)}</div>`;
+  else if (dent === "mixto") rows = `<div class="ogrid g16">${perm(UP,true)}</div><div class="ogrid g16 dec">${decAligned(UPD,false)}</div><div class="archgap"></div><div class="ogrid g16 dec">${decAligned(LOWD,true)}</div><div class="ogrid g16">${perm(LOW,false)}</div>`;
+  else rows = `<div class="ogrid g16">${perm(UP,true)}</div><div class="archgap"></div><div class="ogrid g16">${perm(LOW,false)}</div>`;
+  return `<div class="odo ${dent==="nino"?"big":""}" id="odo">${rows}</div>`;
+}
+function descPieza(t){
+  const parts = []; if (!t) return "sin hallazgos";
+  const cs = Object.entries(t.caras||{});
+  const car = cs.filter(([,v])=>v==="caries").map(([k])=>k), ob = cs.filter(([,v])=>v==="obt").map(([k])=>k);
+  if (car.length) parts.push(`caries ${car.join("")}`); if (ob.length) parts.push(`obturación ${ob.join("")}`);
+  Object.keys(t.estado||{}).forEach(k => parts.push(EST_N[k]));
+  return parts.length ? parts.join(" · ") : "sin hallazgos";
+}
+/* Texto de un cambio de pieza: antes → después */
+function descCambio(a, b){
+  a = a||{caras:{},estado:{}}; b = b||{caras:{},estado:{}};
+  const out = [];
+  const ca = a.caras||{}, cb = b.caras||{};
+  const caras = [...new Set([...Object.keys(ca), ...Object.keys(cb)])];
+  const grp = {};
+  caras.forEach(k => { const x = ca[k]||"", y = cb[k]||""; if (x===y) return; const key = x+">"+y; (grp[key] ||= []).push(k); });
+  Object.entries(grp).forEach(([key, ks]) => { const [x,y] = key.split(">"); const c = ks.join("");
+    if (x==="caries" && y==="obt") out.push({t:`Caries ${c} tratada con obturación`, ok:1});
+    else if (x==="caries" && !y) out.push({t:`Caries ${c} curada`, ok:1});
+    else if (!x) out.push({t:`Nueva ${CARA_N[y]} ${c}`, bad: y==="caries"});
+    else if (!y) out.push({t:`Se quitó ${CARA_N[x]} ${c}`});
+    else out.push({t:`${CARA_N[x]} ${c} → ${CARA_N[y]}`, bad: y==="caries"});
   });
-  return `<div class="tools" role="radiogroup" aria-label="Herramienta">${TOOLS.map(([k,l,,col])=>`<button class="tool ${UI.tool===k?"on":""}" data-tool="${k}" role="radio" aria-checked="${UI.tool===k}"><i style="background:${col};${k==="borrar"?"border:1px solid #BFAF9C":""}"></i>${l}</button>`).join("")}</div>
-  <div class="odo" id="odo">${row(UP,true)}<div class="archgap"></div>${row(LOW,false)}</div>
-  <div class="hint">Elige una herramienta y toca la cara o la pieza. Desliza para ver toda la arcada.</div>
-  <div class="legend"><span><b style="color:var(--red)">Rojo</b>: por tratar</span><span><b style="color:var(--blue)">Azul</b>: tratado / existente</span><span>V M D L O: caras</span></div>
-  <div class="sectionhead"><h3>Hallazgos</h3>${hall.length?`<button class="mini" data-act="limpiarOdo">Limpiar todo</button>`:""}</div>
+  const ea = a.estado||{}, eb = b.estado||{};
+  Object.keys(EST_N).forEach(k => {
+    if (!ea[k] && eb[k]) out.push({t: k==="ausente"?"Pieza ausente":k==="ext"?"Extracción indicada":`${EST_N[k][0].toUpperCase()+EST_N[k].slice(1)} realizada`, bad: k==="ext"});
+    if (ea[k] && !eb[k]) out.push({t: k==="ext"?"Extracción ya no indicada":`Se quitó ${EST_N[k]}`});
+  });
+  return out;
+}
+/* Odontograma tal como estaba al final de una fecha */
+function odoEnFecha(p, fecha){
+  const o = JSON.parse(JSON.stringify(p.odontograma||{}));
+  const h = [...(p.odoHist||[])].sort((x,y)=> (y.fecha+y.ts).localeCompare(x.fecha+x.ts));
+  for (const c of h){ if (c.fecha <= fecha) break; if (vacio(c.antes)) delete o[c.pieza]; else o[c.pieza] = JSON.parse(JSON.stringify(c.antes)); }
+  return o;
+}
+function tOdo(p){
+  const o = p.odontograma||{}; const dent = denticionDe(p);
+  const modo = UI.odoModo || "actual";
+  const seg = `<div class="seg" role="tablist"><button class="${modo==="actual"?"on":""}" data-odomodo="actual">Actual</button><button class="${modo==="evol"?"on":""}" data-odomodo="evol">Evolución${(p.odoHist||[]).length?` <span class="cnt">${new Set((p.odoHist||[]).map(c=>c.fecha)).size}</span>`:""}</button></div>`;
+  const dentSel = `<div class="dent">${DENT.map(([k,l])=>`<button class="${dent===k?"on":""}" data-dent="${k}">${l}</button>`).join("")}</div>`;
+  const legend = `<div class="legend"><span><i class="sw" style="background:var(--red)"></i>Por tratar</span><span><i class="sw" style="background:var(--blue)"></i>Tratado</span><span>V M D L O: caras</span></div>`;
+  if (modo === "evol") return seg + tOdoEvol(p, dent);
+  const hall = Object.keys(o).sort((a,b)=>a-b).filter(n=>!vacio(o[n])).map(n => `<button class="item hallbtn" data-t="${n}"><div class="grow" style="text-align:left"><span class="t num">Pieza ${n}</span> <span class="d">${descPieza(o[n])}</span></div>${ICON.chev}</button>`);
+  return `${seg}
+  <div class="odohead">${dentSel}</div>
+  ${odoGrid(o, dent)}
+  <div class="hint">Toca una pieza para registrar caries, obturaciones u otros hallazgos.</div>
+  ${legend}
+  <div class="sectionhead"><h3>Hallazgos actuales</h3></div>
   <div class="list">${hall.length?hall.join(""):`<div class="emptybox">Sin hallazgos registrados.</div>`}</div>`;
+}
+function tOdoEvol(p, dent){
+  const h = p.odoHist||[];
+  if (!h.length) return `<div class="emptybox" style="margin-top:4px"><b>Aún no hay cambios registrados</b>Cada vez que marques o cambies algo en una pieza, quedará aquí con su fecha. Por ejemplo: una caries que luego se obtura.</div>`;
+  const fechas = [...new Set(h.map(c=>c.fecha))].sort().reverse();
+  const sel = fechas.includes(UI.odoFecha) ? UI.odoFecha : fechas[0];
+  const delDia = h.filter(c=>c.fecha===sel).sort((a,b)=>a.pieza-b.pieza);
+  const o = odoEnFecha(p, sel);
+  const chips = `<div class="fechas">${fechas.map(f=>`<button class="${f===sel?"on":""}" data-odofecha="${f}"><b>${parse(f).getDate()}</b><span>${MESES[parse(f).getMonth()].slice(0,3)} ${String(parse(f).getFullYear()).slice(2)}</span></button>`).join("")}</div>`;
+  return `${chips}
+  <div class="sub" style="margin:2px 0 8px">Odontograma al ${fmtShort(sel)}${sel===fechas[0]?" (último registro)":""}. Las piezas resaltadas cambiaron ese día.</div>
+  ${odoGrid(o, dent, {ro:true, mark:new Set(delDia.map(c=>String(c.pieza)))})}
+  <div class="sectionhead" style="margin-top:14px"><h3>Cambios del ${fmtShort(sel)}</h3></div>
+  <div class="list">${delDia.map(c => { const ds = descCambio(c.antes, c.despues); return `<div class="item"><div class="grow"><div class="t num">Pieza ${c.pieza} <span class="d" style="font-weight:500">· ${nombrePieza(c.pieza)}</span></div>${ds.map(d=>`<div class="chg ${d.ok?"ok":d.bad?"bad":""}">${esc(d.t)}</div>`).join("")}${c.nota?`<p class="d">${esc(c.nota)}</p>`:""}</div></div>`; }).join("")}</div>`;
+}
+/* Editor de una pieza */
+function editarPieza(n, fechaIni){
+  const p = S.pacientes[UI.pid]; if (!p) return;
+  const orig = (p.odontograma||{})[n];
+  const d = JSON.parse(JSON.stringify(orig || {caras:{},estado:{}})); d.caras ||= {}; d.estado ||= {};
+  let tool = "caries";
+  const hist = (p.odoHist||[]).filter(c=>String(c.pieza)===String(n)).sort((a,b)=>(b.fecha+b.ts).localeCompare(a.fecha+a.ts));
+  const draw = bd => {
+    $("#pz-svg", bd).innerHTML = toothSVG(n, d);
+    bd.querySelectorAll("[data-ct]").forEach(b => b.classList.toggle("on", b.dataset.ct===tool));
+    bd.querySelectorAll("[data-et]").forEach(b => b.classList.toggle("on", !!d.estado[b.dataset.et]));
+    $("#pz-desc", bd).textContent = descPieza(d);
+  };
+  openSheet(`Pieza ${n}`, `<div class="sub" style="margin:-4px 0 12px">${nombrePieza(n).replace(/^./,c=>c.toUpperCase())}</div>
+    <label>Marca las caras</label>
+    <div class="chips" style="margin:6px 0 10px">${CARA_T.map(([k,l,c])=>`<button type="button" class="chip tchip" data-ct="${k}"><i style="background:${c}"></i>${l}</button>`).join("")}</div>
+    <div class="bigtooth"><span class="fl t">${geo(n).top}</span><div id="pz-svg"></div><span class="fl b">${geo(n).bottom}</span><span class="fl l">${geo(n).left}</span><span class="fl r">${geo(n).right}</span></div>
+    <div class="sub" style="text-align:center;margin:6px 0 14px" id="pz-desc"></div>
+    <label>Toda la pieza</label>
+    <div class="chips" style="margin:6px 0 14px">${EST_T.map(([k,l])=>`<button type="button" class="chip" data-et="${k}">${l}</button>`).join("")}</div>
+    <div class="two"><div class="f"><label for="pz-fecha">Fecha del registro</label><input id="pz-fecha" type="date" value="${esc(fechaIni||todayStr())}"></div><div class="f"><label for="pz-nota">Nota (opcional)</label><input id="pz-nota" placeholder="Ej. resina A2"></div></div>
+    <div class="btnrow"><button type="button" class="btn" id="pz-limpiar">Dejar sana</button><button type="button" class="btn primary" id="pz-ok">Guardar</button></div>
+    ${hist.length?`<div class="sectionhead" style="margin-top:18px"><h3>Historial de esta pieza</h3></div><div class="list">${hist.map(c=>`<div class="item"><div class="grow"><div class="d">${fmtShort(c.fecha)}</div>${descCambio(c.antes,c.despues).map(x=>`<div class="chg ${x.ok?"ok":x.bad?"bad":""}">${esc(x.t)}</div>`).join("")}${c.nota?`<p class="d">${esc(c.nota)}</p>`:""}</div></div>`).join("")}</div>`:""}`,
+  bd => {
+    draw(bd);
+    bd.addEventListener("click", e => {
+      const ct = e.target.closest("[data-ct]"); if (ct){ tool = ct.dataset.ct; draw(bd); return; }
+      const et = e.target.closest("[data-et]"); if (et){ const k = et.dataset.et; if (d.estado[k]) delete d.estado[k]; else d.estado[k] = true; draw(bd); return; }
+      const s = e.target.closest("#pz-svg [data-s]"); if (s){ const k = s.dataset.s; if (tool==="sano" || d.caras[k]===tool) delete d.caras[k]; else d.caras[k] = tool; draw(bd); return; }
+    });
+    $("#pz-limpiar", bd).onclick = () => { d.caras = {}; d.estado = {}; draw(bd); };
+    $("#pz-ok", bd).onclick = () => {
+      const fecha = val(bd,"pz-fecha") || todayStr(), nota = val(bd,"pz-nota");
+      const nuevo = vacio(d) ? null : d;
+      if (mismo(vacio(orig)?null:orig, nuevo) && !nota){ closeSheet(); return; }
+      updPac(pp => {
+        pp.odontograma ||= {}; pp.odoHist ||= [];
+        if (nuevo) pp.odontograma[n] = nuevo; else delete pp.odontograma[n];
+        // un solo registro por pieza y fecha: se conserva el estado inicial del día
+        const prev = pp.odoHist.find(c => String(c.pieza)===String(n) && c.fecha===fecha);
+        if (prev){ prev.despues = nuevo; prev.ts = Date.now(); if (nota) prev.nota = nota; if (mismo(vacio(prev.antes)?null:prev.antes, nuevo) && !prev.nota) pp.odoHist = pp.odoHist.filter(c=>c!==prev); }
+        else pp.odoHist.push({id:uid("h"), ts:Date.now(), fecha, pieza:String(n), antes: vacio(orig)?null:orig, despues:nuevo, nota});
+      });
+      closeSheet(); toast(`Pieza ${n} guardada`);
+    };
+  });
 }
 function tEvo(p){
   const ev = [...(p.evoluciones||[])].sort((a,b)=>b.fecha.localeCompare(a.fecha));
@@ -648,7 +824,7 @@ function openSheet(title, body, onMount){
   document.body.style.overflow = "hidden";
   onMount && onMount($(".bd", sheetEl));
 }
-function closeSheet(){ if (sheetEl){ sheetEl.remove(); sheetEl = null; document.body.style.overflow = ""; } }
+function closeSheet(){ if (sheetEl){ sheetEl.remove(); sheetEl = null; document.body.style.overflow = ""; if (recargaPendiente) location.reload(); } }
 document.addEventListener("keydown", e => { if (e.key === "Escape") closeSheet(); });
 let toastT;
 function toast(msg){ let t = $(".toast"); if (!t){ t = document.createElement("div"); t.className = "toast"; t.setAttribute("role","status"); document.body.appendChild(t); } t.textContent = msg; clearTimeout(toastT); toastT = setTimeout(()=>t.remove(), 2600); }
@@ -788,22 +964,10 @@ document.addEventListener("click", e => {
   const mes = t.closest("[data-mes]"); if (mes){ const n = +mes.dataset.mes; if (n===0){ UI.mes = todayStr().slice(0,8)+"01"; UI.calSel = todayStr(); } else { UI.mes = addMonths(UI.mes, n); UI.calSel = UI.mes; } render(); return; }
   const cal = t.closest("[data-cal]"); if (cal){ UI.calSel = cal.dataset.cal; if (!UI.calSel.startsWith(UI.mes.slice(0,7))) UI.mes = UI.calSel.slice(0,8)+"01"; render(); return; }
   const tab = t.closest("[data-tab]"); if (tab){ UI.tab = tab.dataset.tab; render(); return; }
-  const tool = t.closest("[data-tool]"); if (tool){ UI.tool = tool.dataset.tool; const o=$("#odo"); const sl=o?o.scrollLeft:0; render(); const o2=$("#odo"); if(o2){o2.dataset.sc=1;o2.scrollLeft=sl;} return; }
-  const tooth = t.closest("[data-t]");
-  if (tooth && UI.route==="paciente"){
-    const n = tooth.dataset.t; const s = t.closest("[data-s]")?.dataset.s;
-    const tl = TOOLS.find(x=>x[0]===UI.tool);
-    if (tl[2]==="s" && !s) return;
-    const o = $("#odo"); const sl = o ? o.scrollLeft : 0;
-    updPac(p => { p.odontograma = p.odontograma||{}; const td = p.odontograma[n] = p.odontograma[n]||{caras:{},estado:{}}; td.caras=td.caras||{}; td.estado=td.estado||{};
-      if (UI.tool==="borrar"){ if (s && td.caras[s]) delete td.caras[s]; else { td.caras={}; td.estado={}; } }
-      else if (tl[2]==="s"){ if (!s) return; td.caras[s] = td.caras[s]===UI.tool ? undefined : UI.tool; if(!td.caras[s]) delete td.caras[s]; }
-      else { td.estado[UI.tool] = !td.estado[UI.tool]; if(!td.estado[UI.tool]) delete td.estado[UI.tool]; }
-      if (!Object.keys(td.caras).length && !Object.keys(td.estado).length) delete p.odontograma[n];
-    });
-    const o2 = $("#odo"); if (o2){ o2.dataset.sc = 1; o2.scrollLeft = sl; }
-    return;
-  }
+  const om = t.closest("[data-odomodo]"); if (om){ UI.odoModo = om.dataset.odomodo; render(); return; }
+  const of = t.closest("[data-odofecha]"); if (of){ UI.odoFecha = of.dataset.odofecha; render(); return; }
+  const dn = t.closest("[data-dent]"); if (dn){ const v = dn.dataset.dent; updPac(p => p.denticion = v); return; }
+  const tooth = t.closest("[data-t]"); if (tooth && UI.route==="paciente"){ editarPieza(tooth.dataset.t); return; }
   const fn = (sel, f) => { const el = t.closest(sel); if (el){ f(el); return true; } return false; };
   if (fn("[data-edit-evo]", el => formLista("evoluciones", S.pacientes[UI.pid].evoluciones.find(i=>i.id===el.dataset.editEvo)))) return;
   if (fn("[data-edit-pres]", el => formLista("presupuesto", S.pacientes[UI.pid].presupuesto.find(i=>i.id===el.dataset.editPres)))) return;
@@ -822,7 +986,6 @@ document.addEventListener("click", e => {
   else if (a==="addPres") formLista("presupuesto");
   else if (a==="addTrat") formLista("tratamientos");
   else if (a==="addAbono") formLista("abonos");
-  else if (a==="limpiarOdo") confirmSheet("Limpiar odontograma", "Se borrarán todas las marcas de este odontograma.", "Limpiar", () => updPac(p => p.odontograma = {}));
   else if (a==="exportar") exportar();
   else if (a==="importar") $("#importFile").click();
   else if (a==="demo") cargarDemo();
@@ -860,13 +1023,14 @@ async function cargarDemo(){
   const P = [
     {id:"pdemo1", nombre:"María Fernanda Torres Quispe", dni:"72345118", nacimiento:"1994-03-12", telefono:"987 654 321", correo:"mafe.torres@correo.pe", direccion:"Av. Arequipa 1450, Lince", alergias:"Penicilina", antecedentes:"Gastritis. Sin medicación actual.", emergencia:"Jorge Torres · 945 112 300",
       odontograma:{"16":{caras:{O:"caries",M:"caries"},estado:{}},"26":{caras:{O:"obt"},estado:{}},"36":{caras:{},estado:{endo:true,corona:true}},"48":{caras:{},estado:{ext:true}}},
+      odoHist:[{id:"h1",ts:1,fecha:addMonths(h,-2),pieza:"26",antes:null,despues:{caras:{O:"caries"},estado:{}},nota:"Caries oclusal detectada en control"},{id:"h2",ts:2,fecha:addMonths(h,-2),pieza:"48",antes:null,despues:{caras:{},estado:{ext:true}},nota:"Tercera molar semierupcionada"},{id:"h3",ts:3,fecha:addMonths(h,-2),pieza:"36",antes:null,despues:{caras:{},estado:{endo:true}},nota:""},{id:"h4",ts:4,fecha:addDays(h,-14),pieza:"26",antes:{caras:{O:"caries"},estado:{}},despues:{caras:{O:"obt"},estado:{}},nota:"Resina A2"},{id:"h5",ts:5,fecha:addDays(h,-14),pieza:"16",antes:null,despues:{caras:{O:"caries",M:"caries"},estado:{}},nota:""},{id:"h6",ts:6,fecha:addDays(h,-14),pieza:"36",antes:{caras:{},estado:{endo:true}},despues:{caras:{},estado:{endo:true,corona:true}},nota:"Corona de porcelana"}],
       evoluciones:[{id:"e1",fecha:addMonths(h,-6),texto:"Profilaxis y destartraje. Se indica control en 6 meses.",pieza:""},{id:"e2",fecha:addDays(h,-14),texto:"Evaluación. Caries O-M en 16. Se presupuesta resina.",pieza:"16"}],
       presupuesto:[{id:"b1",desc:"Resina compuesta",pieza:"16",precio:150,estado:"pendiente"},{id:"b2",desc:"Exodoncia tercera molar",pieza:"48",precio:280,estado:"pendiente"},{id:"b3",desc:"Profilaxis",pieza:"",precio:80,estado:"realizado"}],
       abonos:[{id:"a1",fecha:addDays(h,-14),monto:180,nota:"Yape"}],
       tratamientos:[{id:"t1",fecha:addMonths(h,-6),desc:"Profilaxis",pieza:"",monto:80}]},
     {id:"pdemo2", nombre:"Luis Alberto Ramírez Soto", dni:"45120987", nacimiento:"1981-08-30", telefono:"956 220 114", alergias:"", antecedentes:"Hipertensión controlada (losartán).", emergencia:"Rosa Soto · 999 450 210",
       odontograma:{"11":{caras:{},estado:{corona:true}},"21":{caras:{M:"caries"},estado:{}}}, evoluciones:[], presupuesto:[{id:"b4",desc:"Corona de porcelana",pieza:"21",precio:950,estado:"pendiente"}], abonos:[], tratamientos:[]},
-    {id:"pdemo3", nombre:"Camila Rojas Huamán", dni:"76881203", nacimiento:"2008-01-19", telefono:"912 300 456", antecedentes:"Ortodoncia fija desde marzo.", emergencia:"Patricia Huamán · 934 770 120"},
+    {id:"pdemo3", nombre:"Camila Rojas Huamán", dni:"76881203", nacimiento:"2016-01-19", denticion:"mixto", odontograma:{"55":{caras:{O:"caries"},estado:{}},"75":{caras:{O:"obt"},estado:{}},"16":{caras:{O:"obt"},estado:{}}}, telefono:"912 300 456", antecedentes:"Ortodoncia fija desde marzo.", emergencia:"Patricia Huamán · 934 770 120"},
     {id:"pdemo4", nombre:"Jorge Mendoza Paredes", dni:"09876543", nacimiento:"1967-11-02", telefono:"981 004 552", alergias:"Látex", antecedentes:"Diabetes tipo 2."},
     {id:"pdemo5", nombre:"Andrea Salazar Vega", dni:"70011234", nacimiento:"1999-06-25", telefono:"923 818 090"},
   ];

@@ -9,3 +9,7 @@ App web (móvil) para que la Dra. Valeria lleve el control de sus atenciones odo
 Los datos se guardan en el navegador del dispositivo (localStorage). Usa **Ajustes → Copia de seguridad** para descargar o restaurar un respaldo.
 
 Es un solo archivo, `index.html`, publicado con GitHub Pages.
+
+## Publicar cambios
+
+Antes de cada commit ejecuta `./actualizar-version.sh`. Cambia la versión en `index.html` y `version.json`; al abrir la app, el celular detecta la versión nueva y se recarga solo.
