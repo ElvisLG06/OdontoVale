@@ -214,7 +214,9 @@ h1,h2,h3{font-family:var(--display);font-weight:600;margin:0;text-wrap:balance;l
 .seg button{height:36px;border:0;border-radius:10px;background:none;font-weight:700;font-size:13px;color:var(--muted);display:flex;align-items:center;justify-content:center;gap:6px}
 .seg button.on{background:var(--bg);color:var(--ink);box-shadow:0 1px 4px rgba(60,40,20,.1)}
 .seg .cnt{background:var(--accent);color:#fff;border-radius:99px;font-size:10px;padding:1px 6px}
-.odohead{display:flex;justify-content:flex-end;margin-bottom:8px}
+.odohead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
+.seg button:disabled{opacity:.45}
+.seg .lock{width:13px;height:13px}
 .dent{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
 .dent button{height:30px;padding:0 11px;border:0;background:var(--bg);font-size:12px;font-weight:700;color:var(--muted)}
 .dent button+button{border-left:1px solid var(--line)}
@@ -316,7 +318,7 @@ setTimeout(function(){s.classList.add("out");var m=document.querySelector('meta[
 
 <script>
 /* Actualización automática: al abrir o volver a la app, si hay una versión nueva se recarga sola */
-const APP_VERSION = "2026.11.15-2129";
+const APP_VERSION = "2026.11.16-0020";
 let recargaPendiente = false;
 async function buscarActualizacion(){
   if (!/^https?:$/.test(location.protocol) || (window.claude && typeof window.claude.use === "function")) return;
@@ -366,7 +368,7 @@ const ESTADOS = {programada:["Programada",""], atendida:["Atendida","ok"], no_as
 
 /* ---------- almacenamiento ---------- */
 const S = { pacientes:{}, citas:{}, ready:false, mode:null, offline:false };
-const UI = { route:"hoy", dia:todayStr(), mes:todayStr().slice(0,8)+"01", calSel:todayStr(), tab:"datos", odoModo:"actual", odoFecha:"", q:"", pq:"" };
+const UI = { route:"hoy", dia:todayStr(), mes:todayStr().slice(0,8)+"01", calSel:todayStr(), tab:"datos", odoModo:"", q:"", pq:"" };
 let DB = null;
 const PATH = { pacientes:"clinica/main/pacientes", citas:"clinica/main/citas" };
 const LSKEY = "consultorio-valeria-v1";
@@ -446,7 +448,7 @@ function ultimaVisita(pid){ const hoy = todayStr(); return citasPaciente(pid).fi
 /* ---------- router ---------- */
 function readHash(){
   const h = location.hash.replace("#","");
-  if (h.startsWith("paciente-")){ const id = h.slice(9); if (UI.route !== "paciente" || UI.pid !== id){ UI.tab = "datos"; UI.odoModo = "actual"; UI.odoFecha = ""; } UI.route = "paciente"; UI.pid = id; }
+  if (h.startsWith("paciente-")){ const id = h.slice(9); if (UI.route !== "paciente" || UI.pid !== id){ UI.tab = "datos"; UI.odoModo = ""; } UI.route = "paciente"; UI.pid = id; }
   else if (["hoy","calendario","pacientes","ajustes"].includes(h)) UI.route = h;
   else UI.route = "hoy";
 }
@@ -654,7 +656,7 @@ function denticionDe(p){
   const a = age(p.nacimiento);
   return a===null ? "adulto" : a < 6 ? "nino" : a < 13 ? "mixto" : "adulto";
 }
-const vacio = t => !t || (!Object.keys(t.caras||{}).length && !Object.keys(t.estado||{}).length);
+const vacio = t => !t || (!Object.keys(t.caras||{}).length && !Object.keys(t.estado||{}).length && !t.nota);
 const mismo = (a,b) => JSON.stringify(a||null) === JSON.stringify(b||null);
 /* Dibuja el odontograma completo, ajustado al ancho (sin deslizar) */
 function odoGrid(o, dent, opts={}){
@@ -678,107 +680,64 @@ function descPieza(t){
   Object.keys(t.estado||{}).forEach(k => parts.push(EST_N[k]));
   return parts.length ? parts.join(" · ") : "sin hallazgos";
 }
-/* Texto de un cambio de pieza: antes → después */
-function descCambio(a, b){
-  a = a||{caras:{},estado:{}}; b = b||{caras:{},estado:{}};
-  const out = [];
-  const ca = a.caras||{}, cb = b.caras||{};
-  const caras = [...new Set([...Object.keys(ca), ...Object.keys(cb)])];
-  const grp = {};
-  caras.forEach(k => { const x = ca[k]||"", y = cb[k]||""; if (x===y) return; const key = x+">"+y; (grp[key] ||= []).push(k); });
-  Object.entries(grp).forEach(([key, ks]) => { const [x,y] = key.split(">"); const c = ks.join("");
-    if (x==="caries" && y==="obt") out.push({t:`Caries ${c} tratada con obturación`, ok:1});
-    else if (x==="caries" && !y) out.push({t:`Caries ${c} curada`, ok:1});
-    else if (!x) out.push({t:`Nueva ${CARA_N[y]} ${c}`, bad: y==="caries"});
-    else if (!y) out.push({t:`Se quitó ${CARA_N[x]} ${c}`});
-    else out.push({t:`${CARA_N[x]} ${c} → ${CARA_N[y]}`, bad: y==="caries"});
-  });
-  const ea = a.estado||{}, eb = b.estado||{};
-  Object.keys(EST_N).forEach(k => {
-    if (!ea[k] && eb[k]) out.push({t: k==="ausente"?"Pieza ausente":k==="ext"?"Extracción indicada":`${EST_N[k][0].toUpperCase()+EST_N[k].slice(1)} realizada`, bad: k==="ext"});
-    if (ea[k] && !eb[k]) out.push({t: k==="ext"?"Extracción ya no indicada":`Se quitó ${EST_N[k]}`});
-  });
-  return out;
+/* Odontograma inicial (se fija una vez) y evolución (se modifica) */
+function odoInicial(p){
+  if (p.odoInicial) return p.odoInicial;
+  // pacientes de versiones anteriores: lo que ya tenían queda como inicial fijado
+  if (!vacioOdo(p.odontograma)) return {odontograma: p.odontograma, fijado: true, fecha: null};
+  return {odontograma: {}, fijado: false};
 }
-/* Odontograma tal como estaba al final de una fecha */
-function odoEnFecha(p, fecha){
-  const o = JSON.parse(JSON.stringify(p.odontograma||{}));
-  const h = [...(p.odoHist||[])].sort((x,y)=> (y.fecha+y.ts).localeCompare(x.fecha+x.ts));
-  for (const c of h){ if (c.fecha <= fecha) break; if (vacio(c.antes)) delete o[c.pieza]; else o[c.pieza] = JSON.parse(JSON.stringify(c.antes)); }
-  return o;
-}
+const vacioOdo = o => !o || !Object.keys(o).some(n => !vacio(o[n]));
 function tOdo(p){
-  const o = p.odontograma||{}; const dent = denticionDe(p);
-  const modo = UI.odoModo || "actual";
-  const seg = `<div class="seg" role="tablist"><button class="${modo==="actual"?"on":""}" data-odomodo="actual">Actual</button><button class="${modo==="evol"?"on":""}" data-odomodo="evol">Evolución${(p.odoHist||[]).length?` <span class="cnt">${new Set((p.odoHist||[]).map(c=>c.fecha)).size}</span>`:""}</button></div>`;
-  const dentSel = `<div class="dent">${DENT.map(([k,l])=>`<button class="${dent===k?"on":""}" data-dent="${k}">${l}</button>`).join("")}</div>`;
-  const legend = `<div class="legend"><span><i class="sw" style="background:var(--red)"></i>Por tratar</span><span><i class="sw" style="background:var(--blue)"></i>Tratado</span><span>V M D L O: caras</span></div>`;
-  if (modo === "evol") return seg + tOdoEvol(p, dent);
-  const hall = Object.keys(o).sort((a,b)=>a-b).filter(n=>!vacio(o[n])).map(n => `<button class="item hallbtn" data-t="${n}"><div class="grow" style="text-align:left"><span class="t num">Pieza ${n}</span> <span class="d">${descPieza(o[n])}</span></div>${ICON.chev}</button>`);
-  return `${seg}
-  <div class="odohead">${dentSel}</div>
-  ${odoGrid(o, dent)}
-  <div class="hint">Toca una pieza para registrar caries, obturaciones u otros hallazgos.</div>
-  ${legend}
-  <div class="sectionhead"><h3>Hallazgos actuales</h3></div>
-  <div class="list">${hall.length?hall.join(""):`<div class="emptybox">Sin hallazgos registrados.</div>`}</div>`;
+  const ini = odoInicial(p); const dent = denticionDe(p);
+  const modo = ini.fijado ? (UI.odoModo || "evol") : "inicial";
+  const seg = `<div class="seg" role="tablist"><button class="${modo==="inicial"?"on":""}" data-odomodo="inicial">Inicial${ini.fijado?` <svg class="lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>`:""}</button><button class="${modo==="evol"?"on":""}" data-odomodo="evol" ${ini.fijado?"":"disabled"}>Evolución</button></div>`;
+  const dentSel = `<div class="odohead"><span></span><div class="dent">${DENT.map(([k,l])=>`<button class="${dent===k?"on":""}" data-dent="${k}">${l}</button>`).join("")}</div></div>`;
+  const legend = `<div class="legend"><span><i class="sw" style="background:var(--red)"></i>Caries</span><span><i class="sw" style="background:var(--blue)"></i>Tratado</span></div>`;
+  if (modo === "inicial"){
+    if (ini.fijado) return seg + dentSel + odoGrid(ini.odontograma||{}, dent, {ro:true}) + legend + `<div class="hint" style="margin-top:0">Registrado${ini.fecha?" el "+fmtShort(ini.fecha):""}. No se puede modificar; los cambios se hacen en Evolución.</div>`;
+    return `${seg}<div class="notice" style="margin-bottom:10px">Registra cómo llegó el paciente. Al terminar, toca “Guardar odontograma inicial”: quedará fijo y los cambios siguientes se harán en Evolución.</div>
+      ${dentSel}${odoGrid(ini.odontograma||{}, dent)}${legend}
+      <button class="btn primary block" data-act="fijarInicial" style="margin-top:4px">Guardar odontograma inicial</button>`;
+  }
+  return seg + dentSel + odoGrid(p.odontograma||{}, dent) + legend;
 }
-function tOdoEvol(p, dent){
-  const h = p.odoHist||[];
-  if (!h.length) return `<div class="emptybox" style="margin-top:4px"><b>Aún no hay cambios registrados</b>Cada vez que marques o cambies algo en una pieza, quedará aquí con su fecha. Por ejemplo: una caries que luego se obtura.</div>`;
-  const fechas = [...new Set(h.map(c=>c.fecha))].sort().reverse();
-  const sel = fechas.includes(UI.odoFecha) ? UI.odoFecha : fechas[0];
-  const delDia = h.filter(c=>c.fecha===sel).sort((a,b)=>a.pieza-b.pieza);
-  const o = odoEnFecha(p, sel);
-  const chips = `<div class="fechas">${fechas.map(f=>`<button class="${f===sel?"on":""}" data-odofecha="${f}"><b>${parse(f).getDate()}</b><span>${MESES[parse(f).getMonth()].slice(0,3)} ${String(parse(f).getFullYear()).slice(2)}</span></button>`).join("")}</div>`;
-  return `${chips}
-  <div class="sub" style="margin:2px 0 8px">Odontograma al ${fmtShort(sel)}${sel===fechas[0]?" (último registro)":""}. Las piezas resaltadas cambiaron ese día.</div>
-  ${odoGrid(o, dent, {ro:true, mark:new Set(delDia.map(c=>String(c.pieza)))})}
-  <div class="sectionhead" style="margin-top:14px"><h3>Cambios del ${fmtShort(sel)}</h3></div>
-  <div class="list">${delDia.map(c => { const ds = descCambio(c.antes, c.despues); return `<div class="item"><div class="grow"><div class="t num">Pieza ${c.pieza} <span class="d" style="font-weight:500">· ${nombrePieza(c.pieza)}</span></div>${ds.map(d=>`<div class="chg ${d.ok?"ok":d.bad?"bad":""}">${esc(d.t)}</div>`).join("")}${c.nota?`<p class="d">${esc(c.nota)}</p>`:""}</div></div>`; }).join("")}</div>`;
-}
-/* Editor de una pieza */
-function editarPieza(n, fechaIni){
+/* Editor de una pieza: modifica el inicial (si aún no está fijado) o la evolución */
+function editarPieza(n){
   const p = S.pacientes[UI.pid]; if (!p) return;
-  const orig = (p.odontograma||{})[n];
+  const ini = odoInicial(p);
+  const enInicial = !ini.fijado;
+  const fuente = enInicial ? (ini.odontograma||{}) : (p.odontograma||{});
+  const orig = fuente[n];
   const d = JSON.parse(JSON.stringify(orig || {caras:{},estado:{}})); d.caras ||= {}; d.estado ||= {};
   let tool = "caries";
-  const hist = (p.odoHist||[]).filter(c=>String(c.pieza)===String(n)).sort((a,b)=>(b.fecha+b.ts).localeCompare(a.fecha+a.ts));
   const draw = bd => {
     $("#pz-svg", bd).innerHTML = toothSVG(n, d);
     bd.querySelectorAll("[data-ct]").forEach(b => b.classList.toggle("on", b.dataset.ct===tool));
     bd.querySelectorAll("[data-et]").forEach(b => b.classList.toggle("on", !!d.estado[b.dataset.et]));
-    $("#pz-desc", bd).textContent = descPieza(d);
   };
-  openSheet(`Pieza ${n}`, `<div class="sub" style="margin:-4px 0 12px">${nombrePieza(n).replace(/^./,c=>c.toUpperCase())}</div>
+  openSheet(`Pieza ${n}`, `<div class="sub" style="margin:-4px 0 12px">${nombrePieza(n).replace(/^./,c=>c.toUpperCase())}${enInicial?" · odontograma inicial":""}</div>
     <label>Marca las caras</label>
-    <div class="chips" style="margin:6px 0 10px">${CARA_T.map(([k,l,c])=>`<button type="button" class="chip tchip" data-ct="${k}"><i style="background:${c}"></i>${l}</button>`).join("")}</div>
+    <div class="chips" style="margin:6px 0 4px">${CARA_T.filter(c=>c[0]!=="sano").map(([k,l,c])=>`<button type="button" class="chip tchip" data-ct="${k}"><i style="background:${c}"></i>${l}</button>`).join("")}</div>
     <div class="bigtooth"><span class="fl t">${geo(n).top}</span><div id="pz-svg"></div><span class="fl b">${geo(n).bottom}</span><span class="fl l">${geo(n).left}</span><span class="fl r">${geo(n).right}</span></div>
-    <div class="sub" style="text-align:center;margin:6px 0 14px" id="pz-desc"></div>
-    <label>Toda la pieza</label>
-    <div class="chips" style="margin:6px 0 14px">${EST_T.map(([k,l])=>`<button type="button" class="chip" data-et="${k}">${l}</button>`).join("")}</div>
-    <div class="two"><div class="f"><label for="pz-fecha">Fecha del registro</label><input id="pz-fecha" type="date" value="${esc(fechaIni||todayStr())}"></div><div class="f"><label for="pz-nota">Nota (opcional)</label><input id="pz-nota" placeholder="Ej. resina A2"></div></div>
-    <div class="btnrow"><button type="button" class="btn" id="pz-limpiar">Dejar sana</button><button type="button" class="btn primary" id="pz-ok">Guardar</button></div>
-    ${hist.length?`<div class="sectionhead" style="margin-top:18px"><h3>Historial de esta pieza</h3></div><div class="list">${hist.map(c=>`<div class="item"><div class="grow"><div class="d">${fmtShort(c.fecha)}</div>${descCambio(c.antes,c.despues).map(x=>`<div class="chg ${x.ok?"ok":x.bad?"bad":""}">${esc(x.t)}</div>`).join("")}${c.nota?`<p class="d">${esc(c.nota)}</p>`:""}</div></div>`).join("")}</div>`:""}`,
+    <label style="display:block;margin-top:10px">Toda la pieza</label>
+    <div class="chips" style="margin:6px 0 16px">${EST_T.map(([k,l])=>`<button type="button" class="chip" data-et="${k}">${l}</button>`).join("")}</div>
+    <div class="f" style="margin-bottom:20px"><label for="pz-nota">Nota (opcional)</label><textarea id="pz-nota" style="min-height:70px" placeholder="Ej. resina A2">${esc(d.nota||"")}</textarea></div>
+    <button type="button" class="btn primary block" id="pz-ok">Guardar</button>`,
   bd => {
     draw(bd);
     bd.addEventListener("click", e => {
       const ct = e.target.closest("[data-ct]"); if (ct){ tool = ct.dataset.ct; draw(bd); return; }
       const et = e.target.closest("[data-et]"); if (et){ const k = et.dataset.et; if (d.estado[k]) delete d.estado[k]; else d.estado[k] = true; draw(bd); return; }
-      const s = e.target.closest("#pz-svg [data-s]"); if (s){ const k = s.dataset.s; if (tool==="sano" || d.caras[k]===tool) delete d.caras[k]; else d.caras[k] = tool; draw(bd); return; }
+      const s = e.target.closest("#pz-svg [data-s]"); if (s){ const k = s.dataset.s; if (d.caras[k]===tool) delete d.caras[k]; else d.caras[k] = tool; draw(bd); return; }
     });
-    $("#pz-limpiar", bd).onclick = () => { d.caras = {}; d.estado = {}; draw(bd); };
     $("#pz-ok", bd).onclick = () => {
-      const fecha = val(bd,"pz-fecha") || todayStr(), nota = val(bd,"pz-nota");
-      const nuevo = vacio(d) ? null : d;
-      if (mismo(vacio(orig)?null:orig, nuevo) && !nota){ closeSheet(); return; }
+      const nota = val(bd,"pz-nota"); if (nota) d.nota = nota; else delete d.nota;
+      const nuevo = vacio(d) && !d.nota ? null : d;
+      if (mismo(orig||null, nuevo)){ closeSheet(); return; }
       updPac(pp => {
-        pp.odontograma ||= {}; pp.odoHist ||= [];
-        if (nuevo) pp.odontograma[n] = nuevo; else delete pp.odontograma[n];
-        // un solo registro por pieza y fecha: se conserva el estado inicial del día
-        const prev = pp.odoHist.find(c => String(c.pieza)===String(n) && c.fecha===fecha);
-        if (prev){ prev.despues = nuevo; prev.ts = Date.now(); if (nota) prev.nota = nota; if (mismo(vacio(prev.antes)?null:prev.antes, nuevo) && !prev.nota) pp.odoHist = pp.odoHist.filter(c=>c!==prev); }
-        else pp.odoHist.push({id:uid("h"), ts:Date.now(), fecha, pieza:String(n), antes: vacio(orig)?null:orig, despues:nuevo, nota});
+        if (enInicial){ pp.odoInicial = pp.odoInicial || {odontograma:{}, fijado:false}; const o = pp.odoInicial.odontograma ||= {}; if (nuevo) o[n] = nuevo; else delete o[n]; }
+        else { const o = pp.odontograma ||= {}; if (nuevo) o[n] = nuevo; else delete o[n]; }
       });
       closeSheet(); toast(`Pieza ${n} guardada`);
     };
@@ -964,8 +923,7 @@ document.addEventListener("click", e => {
   const mes = t.closest("[data-mes]"); if (mes){ const n = +mes.dataset.mes; if (n===0){ UI.mes = todayStr().slice(0,8)+"01"; UI.calSel = todayStr(); } else { UI.mes = addMonths(UI.mes, n); UI.calSel = UI.mes; } render(); return; }
   const cal = t.closest("[data-cal]"); if (cal){ UI.calSel = cal.dataset.cal; if (!UI.calSel.startsWith(UI.mes.slice(0,7))) UI.mes = UI.calSel.slice(0,8)+"01"; render(); return; }
   const tab = t.closest("[data-tab]"); if (tab){ UI.tab = tab.dataset.tab; render(); return; }
-  const om = t.closest("[data-odomodo]"); if (om){ UI.odoModo = om.dataset.odomodo; render(); return; }
-  const of = t.closest("[data-odofecha]"); if (of){ UI.odoFecha = of.dataset.odofecha; render(); return; }
+  const om = t.closest("[data-odomodo]"); if (om && !om.disabled){ UI.odoModo = om.dataset.odomodo; render(); return; }
   const dn = t.closest("[data-dent]"); if (dn){ const v = dn.dataset.dent; updPac(p => p.denticion = v); return; }
   const tooth = t.closest("[data-t]"); if (tooth && UI.route==="paciente"){ editarPieza(tooth.dataset.t); return; }
   const fn = (sel, f) => { const el = t.closest(sel); if (el){ f(el); return true; } return false; };
@@ -988,6 +946,7 @@ document.addEventListener("click", e => {
   else if (a==="addAbono") formLista("abonos");
   else if (a==="exportar") exportar();
   else if (a==="importar") $("#importFile").click();
+  else if (a==="fijarInicial") confirmSheet("Guardar odontograma inicial", "Quedará fijo como el estado con el que llegó el paciente y ya no se podrá modificar. Los cambios siguientes se harán en Evolución.", "Guardar y fijar", () => { updPac(p => { const o = (p.odoInicial && p.odoInicial.odontograma) || {}; p.odoInicial = {odontograma:o, fijado:true, fecha:todayStr()}; p.odontograma = JSON.parse(JSON.stringify(o)); }); UI.odoModo = "evol"; toast("Odontograma inicial guardado"); });
   else if (a==="demo") cargarDemo();
   else if (a==="quitarDemo") confirmSheet("Quitar datos de ejemplo", "Se borrarán los pacientes y citas de ejemplo. Tus registros reales se quedan.", "Quitar", () => { Object.entries(S.citas).forEach(([id,c])=>{ if(c.demo) removeDoc("citas",id); }); Object.entries(S.pacientes).forEach(([id,p])=>{ if(p.demo) removeDoc("pacientes",id); }); toast("Datos de ejemplo quitados"); });
 });
@@ -1023,7 +982,7 @@ async function cargarDemo(){
   const P = [
     {id:"pdemo1", nombre:"María Fernanda Torres Quispe", dni:"72345118", nacimiento:"1994-03-12", telefono:"987 654 321", correo:"mafe.torres@correo.pe", direccion:"Av. Arequipa 1450, Lince", alergias:"Penicilina", antecedentes:"Gastritis. Sin medicación actual.", emergencia:"Jorge Torres · 945 112 300",
       odontograma:{"16":{caras:{O:"caries",M:"caries"},estado:{}},"26":{caras:{O:"obt"},estado:{}},"36":{caras:{},estado:{endo:true,corona:true}},"48":{caras:{},estado:{ext:true}}},
-      odoHist:[{id:"h1",ts:1,fecha:addMonths(h,-2),pieza:"26",antes:null,despues:{caras:{O:"caries"},estado:{}},nota:"Caries oclusal detectada en control"},{id:"h2",ts:2,fecha:addMonths(h,-2),pieza:"48",antes:null,despues:{caras:{},estado:{ext:true}},nota:"Tercera molar semierupcionada"},{id:"h3",ts:3,fecha:addMonths(h,-2),pieza:"36",antes:null,despues:{caras:{},estado:{endo:true}},nota:""},{id:"h4",ts:4,fecha:addDays(h,-14),pieza:"26",antes:{caras:{O:"caries"},estado:{}},despues:{caras:{O:"obt"},estado:{}},nota:"Resina A2"},{id:"h5",ts:5,fecha:addDays(h,-14),pieza:"16",antes:null,despues:{caras:{O:"caries",M:"caries"},estado:{}},nota:""},{id:"h6",ts:6,fecha:addDays(h,-14),pieza:"36",antes:{caras:{},estado:{endo:true}},despues:{caras:{},estado:{endo:true,corona:true}},nota:"Corona de porcelana"}],
+      odoInicial:{fijado:true, fecha:addMonths(h,-2), odontograma:{"26":{caras:{O:"caries"},estado:{}},"48":{caras:{},estado:{ext:true}},"36":{caras:{},estado:{endo:true}}}},
       evoluciones:[{id:"e1",fecha:addMonths(h,-6),texto:"Profilaxis y destartraje. Se indica control en 6 meses.",pieza:""},{id:"e2",fecha:addDays(h,-14),texto:"Evaluación. Caries O-M en 16. Se presupuesta resina.",pieza:"16"}],
       presupuesto:[{id:"b1",desc:"Resina compuesta",pieza:"16",precio:150,estado:"pendiente"},{id:"b2",desc:"Exodoncia tercera molar",pieza:"48",precio:280,estado:"pendiente"},{id:"b3",desc:"Profilaxis",pieza:"",precio:80,estado:"realizado"}],
       abonos:[{id:"a1",fecha:addDays(h,-14),monto:180,nota:"Yape"}],
