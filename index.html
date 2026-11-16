@@ -147,6 +147,7 @@ h1,h2,h3{font-family:var(--display);font-weight:600;margin:0;text-wrap:balance;l
 
 /* botones */
 .btn{height:46px;padding:0 18px;border-radius:13px;border:1px solid var(--line);background:var(--bg);font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+a.btn{text-decoration:none;color:var(--ink)}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
 .btn.soft{background:var(--accent-soft);border-color:var(--accent-soft);color:var(--accent)}
 .btn.danger{color:var(--warn);border-color:var(--warn-soft)}
@@ -333,9 +334,10 @@ setTimeout(function(){s.classList.add("out");document.documentElement.classList.
   </div>
 </nav>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
 <script>
 /* Actualización automática: al abrir o volver a la app, si hay una versión nueva se recarga sola */
-const APP_VERSION = "2026.11.16-1700";
+const APP_VERSION = "2026.11.16-1709";
 let recargaPendiente = false;
 async function buscarActualizacion(){
   if (!/^https?:$/.test(location.protocol) || (window.claude && typeof window.claude.use === "function")) return;
@@ -776,6 +778,7 @@ function tPres(p){
   const it = p.presupuesto||[]; const ab = [...(p.abonos||[])].sort((a,b)=>b.fecha.localeCompare(a.fecha));
   const total = it.reduce((s,i)=>s+(+i.precio||0),0), pag = ab.reduce((s,i)=>s+(+i.monto||0),0);
   return `<div class="totals"><div><span>Presupuesto</span><b class="num">${money(total)}</b></div><div><span>Pagado</span><b class="num" style="color:var(--ok)">${money(pag)}</b></div><div><span>Saldo</span><b class="num" style="color:${total-pag>0?"var(--warn)":"var(--ink)"}">${money(Math.max(total-pag,0))}</b></div></div>
+  ${it.length?`<button class="btn block wa" data-act="enviarPres" style="margin-bottom:14px"><svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true"><path fill="#25D366" d="M12 2.2A9.8 9.8 0 0 0 3.6 17l-1.4 4.9 5-1.3A9.8 9.8 0 1 0 12 2.2z"/><path fill="#fff" d="M17.2 14.5c-.3-.1-1.7-.8-1.9-.9-.3-.1-.5-.1-.7.1l-.9 1.1c-.2.2-.3.2-.6.1a7.3 7.3 0 0 1-3.6-3.2c-.3-.5.3-.4.8-1.4.1-.2 0-.3 0-.5l-.9-2c-.2-.5-.4-.5-.6-.5h-.5c-.2 0-.5.1-.7.3-.3.3-.9.9-.9 2.2s1 2.6 1.1 2.8c.1.2 1.9 2.9 4.6 4.1 1.7.7 2.4.8 3.2.7.5-.1 1.7-.7 1.9-1.3.2-.7.2-1.2.2-1.3-.1-.1-.3-.2-.5-.3z"/></svg>Enviar presupuesto en PDF</button>`:""}
   <div class="sectionhead"><h3>Tratamientos presupuestados</h3><button class="btn primary sm" data-act="addPres">+ Agregar</button></div>
   <div class="list">${it.length?it.map(i=>`<div class="item"><div class="grow"><div class="t">${esc(i.desc)}</div><div class="d">${i.pieza?"Pieza "+esc(i.pieza)+" · ":""}${i.estado==="realizado"?`<span style="color:var(--ok);font-weight:700">Realizado</span>`:"Pendiente"}</div></div><div style="text-align:right"><div class="amt num">${money(i.precio)}</div>${i.estado!=="realizado"?`<button class="mini" style="margin-top:4px" data-hecho="${i.id}">Marcar hecho</button>`:`<button class="mini" style="margin-top:4px" data-edit-pres="${i.id}">Editar</button>`}</div></div>`).join(""):`<div class="emptybox"><b>Sin presupuesto</b>Agrega los tratamientos y su precio.</div>`}</div>
   <div class="sectionhead" style="margin-top:18px"><h3>Pagos</h3><button class="btn soft sm" data-act="addAbono">+ Registrar pago</button></div>
@@ -924,21 +927,25 @@ function formLista(kind, item){
   const isNew = !item; item = item || {fecha:todayStr()};
   const T = {evoluciones:"evolución", presupuesto:"tratamiento al presupuesto", tratamientos:"tratamiento realizado", abonos:"pago"}[kind];
   let html = `<form id="lform">`;
-  if (kind!=="presupuesto") html += `<div class="f"><label for="lf-fecha">Fecha</label><input id="lf-fecha" type="date" value="${esc(item.fecha||todayStr())}"></div>`;
+  if (kind!=="presupuesto" && kind!=="abonos") html += `<div class="f"><label for="lf-fecha">Fecha</label><input id="lf-fecha" type="date" value="${esc(item.fecha||todayStr())}"></div>`;
   if (kind==="evoluciones") html += `<div class="f"><label for="lf-pieza">Pieza (opcional)</label><input id="lf-pieza" inputmode="numeric" value="${esc(item.pieza||"")}" placeholder="Ej. 36"></div><div class="f"><label for="lf-texto">Evolución *</label><textarea id="lf-texto" placeholder="Procedimiento, materiales, indicaciones…">${esc(item.texto||"")}</textarea></div>`;
   if (kind==="presupuesto"||kind==="tratamientos") html += `<div class="f"><label for="lf-desc">Tratamiento *</label><input id="lf-desc" value="${esc(item.desc||"")}" placeholder="Ej. Resina simple"></div><div class="two"><div class="f"><label for="lf-pieza">Pieza</label><input id="lf-pieza" inputmode="numeric" value="${esc(item.pieza||"")}" placeholder="Ej. 26"></div><div class="f"><label for="lf-monto">Precio (S/)</label><input id="lf-monto" type="number" inputmode="decimal" min="0" step="0.5" value="${esc(item.precio ?? item.monto ?? "")}"></div></div>`;
   if (kind==="abonos"){
-    const pres = (S.pacientes[UI.pid].presupuesto||[]);
-    const sel = item.presId || (item.tratamiento ? "" : (pres.find(i=>i.estado!=="realizado")||{}).id || "");
-    html += `<div class="f"><label for="lf-monto">Monto (S/) *</label><input id="lf-monto" type="number" inputmode="decimal" min="0" step="0.5" value="${esc(item.monto??"")}"></div>
-    <div class="f"><label for="lf-trat">Tratamiento</label><select id="lf-trat"><option value="">Pago general (sin tratamiento)</option>${pres.map(i=>`<option value="${i.id}" ${i.id===sel?"selected":""}>${esc(i.desc)}${i.pieza?" · pieza "+esc(i.pieza):""} · ${money(i.precio)}</option>`).join("")}</select>${pres.length?"":`<div class="sub" style="font-size:12px">Agrega tratamientos al presupuesto para elegirlos aquí.</div>`}</div>
+    const pac = S.pacientes[UI.pid]; const pres = (pac.presupuesto||[]);
+    const pendiente = pi => Math.max((+pi.precio||0) - (pac.abonos||[]).filter(a=>a.presId===pi.id && a.id!==item.id).reduce((s,a)=>s+(+a.monto||0),0), 0);
+    var PEND = Object.fromEntries(pres.map(pi=>[pi.id, pendiente(pi)]));
+    const sel = isNew ? ((pres.find(i=>PEND[i.id]>0)||{}).id || "") : (item.presId||"");
+    const montoIni = isNew ? (sel ? PEND[sel] : "") : item.monto;
+    html += `<div class="f"><label for="lf-trat">Tratamiento</label><select id="lf-trat"><option value="">Pago general (sin tratamiento)</option>${pres.map(i=>`<option value="${i.id}" ${i.id===sel?"selected":""}>${esc(i.desc)}${i.pieza?" · pieza "+esc(i.pieza):""} · ${PEND[i.id]>0?"falta "+money(PEND[i.id]):"pagado"}</option>`).join("")}</select>${pres.length?"":`<div class="sub" style="font-size:12px">Agrega tratamientos al presupuesto para elegirlos aquí.</div>`}</div>
+    <div class="two"><div class="f"><label for="lf-monto">Monto (S/) *</label><input id="lf-monto" type="number" inputmode="decimal" min="0" step="0.5" value="${esc(montoIni===""||montoIni==null?"":String(+montoIni))}"></div><div class="f"><label for="lf-fecha">Fecha</label><input id="lf-fecha" type="date" value="${esc(item.fecha||todayStr())}"></div></div>
     <div class="f"><label>Tipo de pago *</label><div class="chips" id="lf-tipo">${TIPOS_PAGO.map(t=>`<button type="button" class="chip ${item.tipo===t?"on":""}" data-tp="${t}">${t}</button>`).join("")}</div></div>`;
   }
   html += `<div class="btnrow">${!isNew?`<button type="button" class="btn danger" id="lf-del">Eliminar</button>`:""}<button class="btn primary" type="submit">${isNew?(kind==="abonos"?"Registrar pago":"Agregar"):"Guardar"}</button></div></form>`;
   openSheet(kind==="abonos" ? (isNew?"Registrar pago":"Editar pago") : (isNew?"Agregar ":"Editar ")+T, html, bd => {
     let tipo = item.tipo || "";
+    const ts = $("#lf-trat", bd); if (ts) ts.onchange = () => { if (ts.value && PEND[ts.value] != null) $("#lf-monto", bd).value = String(PEND[ts.value]); };
     bd.addEventListener("click", e => { const b = e.target.closest("[data-tp]"); if (b){ tipo = b.dataset.tp; bd.querySelectorAll("[data-tp]").forEach(x=>x.classList.toggle("on", x===b)); } });
-    const first = $("#lf-texto",bd)||$("#lf-desc",bd)||$("#lf-monto",bd); setTimeout(()=>first&&first.focus(),50);
+    const first = $("#lf-texto",bd)||$("#lf-desc",bd)||(kind==="abonos"?null:$("#lf-monto",bd)); setTimeout(()=>first&&first.focus(),50);
     const del = $("#lf-del",bd); if (del) del.onclick = () => { updPac(p => p[kind] = (p[kind]||[]).filter(i=>i.id!==item.id)); closeSheet(); toast("Eliminado"); };
     $("#lform",bd).onsubmit = e => { e.preventDefault();
       const it = {...item, id:item.id||uid("i")};
@@ -990,6 +997,7 @@ document.addEventListener("click", e => {
   else if (a==="addAbono") formLista("abonos");
   else if (a==="exportar") exportar();
   else if (a==="importar") $("#importFile").click();
+  else if (a==="enviarPres") enviarPresupuesto();
   else if (a==="fijarInicial") confirmSheet("Guardar odontograma inicial", "Quedará fijo como el estado con el que llegó el paciente y ya no se podrá modificar. Los cambios siguientes se harán en Evolución.", "Guardar y fijar", () => { updPac(p => { const o = (p.odoInicial && p.odoInicial.odontograma) || {}; p.odoInicial = {odontograma:o, fijado:true, fecha:todayStr()}; p.odontograma = JSON.parse(JSON.stringify(o)); }); UI.odoModo = "evol"; toast("Odontograma inicial guardado"); });
   else if (a==="demo") cargarDemo();
   else if (a==="quitarDemo") confirmSheet("Quitar datos de ejemplo", "Se borrarán los pacientes y citas de ejemplo. Tus registros reales se quedan.", "Quitar", () => { Object.entries(S.citas).forEach(([id,c])=>{ if(c.demo) removeDoc("citas",id); }); Object.entries(S.pacientes).forEach(([id,p])=>{ if(p.demo) removeDoc("pacientes",id); }); toast("Datos de ejemplo quitados"); });
@@ -997,6 +1005,84 @@ document.addEventListener("click", e => {
 /* espacio inferior exacto según la altura real de la barra */
 (function(){ const tb = document.querySelector(".tabbar"); const set = () => document.documentElement.style.setProperty("--tabh", tb.offsetHeight + "px"); set(); window.addEventListener("resize", set); if (window.ResizeObserver) new ResizeObserver(set).observe(tb); })();
 $("#fab").onclick = () => formCita({pacienteId: UI.route==="paciente" ? UI.pid : "", fecha: UI.route==="calendario" ? UI.calSel : (UI.route==="hoy" ? UI.dia : todayStr())});
+
+/* ---------- presupuesto en PDF ---------- */
+function logoPNG(){
+  const c = document.createElement("canvas"); c.width = c.height = 256; const x = c.getContext("2d");
+  x.fillStyle = "#8C6A4F"; x.beginPath(); if (x.roundRect) x.roundRect(0,0,256,256,64); else x.rect(0,0,256,256); x.fill();
+  x.setTransform(4,0,0,4,0,-10); x.fillStyle = "#fff";
+  x.fill(new Path2D("M32 20C29 20 27 18 23 18C18 18 15 22 15 28C15 36 19 40 21 48C22 52 26 52 27 48L29 41C30 38 34 38 35 41L37 48C38 52 42 52 43 48C45 40 49 36 49 28C49 22 46 18 41 18C37 18 35 20 32 20Z"));
+  return c.toDataURL("image/png");
+}
+function presupuestoPDF(p){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({unit:"mm", format:"a4"});
+  const INK=[51,41,31], MUT=[134,119,106], ACC=[140,106,79], SAND=[248,243,236], LINE=[237,230,220], OK=[94,139,107], WARN=[180,103,79];
+  const W = 210, M = 18; let y = 18;
+  const S2 = n => "S/ " + (Number(n)||0).toLocaleString("es-PE",{minimumFractionDigits:2, maximumFractionDigits:2});
+  try { doc.addImage(logoPNG(), "PNG", M, y, 16, 16); } catch(e){}
+  doc.setFont("helvetica","bold"); doc.setFontSize(16); doc.setTextColor(...INK); doc.text("Consultorio Dra. Valeria", M+21, y+7);
+  doc.setFont("helvetica","normal"); doc.setFontSize(10.5); doc.setTextColor(...MUT); doc.text("Presupuesto odontológico", M+21, y+13);
+  doc.setFontSize(9.5); doc.text(fmtShort(todayStr()), W-M, y+7, {align:"right"});
+  y += 24; doc.setDrawColor(...LINE); doc.setLineWidth(.4); doc.line(M, y, W-M, y); y += 9;
+  // paciente
+  const campo = (lbl, v, x) => { doc.setFontSize(8.5); doc.setTextColor(...MUT); doc.text(lbl.toUpperCase(), x, y); doc.setFontSize(11); doc.setTextColor(...INK); doc.text(v||"—", x, y+5.5); };
+  campo("Paciente", p.nombre, M); campo("DNI", p.dni, 120); campo("Teléfono", p.telefono, 155);
+  y += 16;
+  // tabla
+  const cols = [[M,"N°"],[M+12,"Tratamiento"],[118,"Pieza"],[138,"Estado"],[W-M,"Precio"]];
+  const head = () => { doc.setFillColor(...SAND); doc.rect(M, y-5.5, W-2*M, 9, "F"); doc.setFont("helvetica","bold"); doc.setFontSize(9); doc.setTextColor(...MUT);
+    cols.forEach(([x,t],i) => doc.text(t, i===4?x-3:x+3, y, i===4?{align:"right"}:{})); doc.setFont("helvetica","normal"); y += 9; };
+  head();
+  const items = p.presupuesto||[];
+  items.forEach((it, i) => {
+    const lines = doc.splitTextToSize(it.desc||"", 118-(M+12)-6);
+    const h = Math.max(1, lines.length)*5 + 4;
+    if (y + h > 262){ doc.addPage(); y = 22; head(); }
+    doc.setFontSize(10); doc.setTextColor(...INK);
+    doc.text(String(i+1), M+3, y); doc.text(lines, M+15, y); doc.text(it.pieza||"—", 121, y);
+    doc.setTextColor(...(it.estado==="realizado"?OK:MUT)); doc.text(it.estado==="realizado"?"Realizado":"Pendiente", 141, y);
+    doc.setTextColor(...INK); doc.text(S2(it.precio), W-M-3, y, {align:"right"});
+    y += h - 4; doc.setDrawColor(...LINE); doc.line(M, y, W-M, y); y += 6;
+  });
+  if (!items.length){ doc.setFontSize(10); doc.setTextColor(...MUT); doc.text("Sin tratamientos presupuestados.", M+3, y); y += 8; }
+  // totales
+  const total = items.reduce((s,i)=>s+(+i.precio||0),0), pag = (p.abonos||[]).reduce((s,a)=>s+(+a.monto||0),0);
+  if (y + 34 > 280){ doc.addPage(); y = 22; }
+  y += 4; const bx = W-M-78;
+  doc.setFillColor(...SAND); doc.roundedRect(bx, y, 78, 30, 3, 3, "F");
+  const fila = (lbl, v, yy, col, bold) => { doc.setFont("helvetica", bold?"bold":"normal"); doc.setFontSize(bold?11.5:10); doc.setTextColor(...MUT); doc.text(lbl, bx+5, yy); doc.setTextColor(...col); doc.text(v, W-M-5, yy, {align:"right"}); };
+  fila("Total presupuesto", S2(total), y+8, INK);
+  fila("Pagado", S2(pag), y+15, OK);
+  fila("Saldo pendiente", S2(Math.max(total-pag,0)), y+24, total-pag>0?WARN:INK, true);
+  doc.setFont("helvetica","normal"); doc.setFontSize(8.5); doc.setTextColor(...MUT);
+  doc.text("Precios en soles. Consultas al mismo número por el que recibiste este documento.", M, 287);
+  return doc.output("blob");
+}
+function telWhatsApp(t){ let d = (t||"").replace(/\D/g,""); if (d.length === 9) d = "51" + d; return d; }
+function enviarPresupuesto(){
+  const p = S.pacientes[UI.pid]; if (!p) return;
+  if (!window.jspdf){ toast("No se pudo cargar el generador de PDF. Revisa tu conexión."); return; }
+  if (!(p.presupuesto||[]).length){ toast("Agrega al menos un tratamiento al presupuesto."); return; }
+  let blob; try { blob = presupuestoPDF(p); } catch(e){ toast("No se pudo crear el PDF."); return; }
+  const nombreArch = `Presupuesto ${p.nombre}.pdf`.replace(/[\\/:*?"<>|]/g,"");
+  const file = new File([blob], nombreArch, {type:"application/pdf"});
+  const url = URL.createObjectURL(blob);
+  const tel = telWhatsApp(p.telefono);
+  const msg = `Hola ${p.nombre.split(" ")[0]}, te envío tu presupuesto del Consultorio Dra. Valeria.`;
+  const puedeCompartir = !!(navigator.canShare && navigator.canShare({files:[file]}));
+  openSheet("Enviar presupuesto", `<div class="item" style="margin-bottom:14px"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="var(--accent)" stroke-width="1.7" stroke-linejoin="round"><path d="M6 2.5h8l4.5 4.5v14.5H6z"/><path d="M14 2.5V7h4.5"/></svg><div class="grow"><div class="t">${esc(nombreArch)}</div><div class="d">${(p.presupuesto||[]).length} tratamientos · ${p.telefono?esc(p.telefono):"sin teléfono registrado"}</div></div></div>
+    <div class="stack">
+      ${puedeCompartir ? `<button class="btn primary block" id="ep-share">Enviar por WhatsApp</button><div class="sub" style="font-size:12px;text-align:center;margin-top:-2px">Elige WhatsApp y luego el chat de ${esc(p.nombre.split(" ")[0])}.</div>`
+        : `<a class="btn primary block" id="ep-wa" ${tel?`href="https://wa.me/${tel}?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener"`:""}>Descargar PDF y abrir WhatsApp</a><div class="sub" style="font-size:12px;text-align:center;margin-top:-2px">Se descarga el PDF; adjúntalo en el chat que se abre.</div>`}
+      <a class="btn block" id="ep-dl" href="${url}" download="${esc(nombreArch)}">Solo descargar PDF</a>
+    </div>`, bd => {
+      const sh = $("#ep-share", bd);
+      if (sh) sh.onclick = async () => { try { await navigator.share({files:[file], title:nombreArch, text:msg}); closeSheet(); } catch(e){ if (e && e.name !== "AbortError") toast("No se pudo compartir. Usa “Solo descargar PDF”."); } };
+      const wa = $("#ep-wa", bd);
+      if (wa) wa.addEventListener("click", () => { $("#ep-dl", bd).click(); if (!tel) toast("El paciente no tiene teléfono registrado."); });
+  });
+}
 
 /* ---------- copia de seguridad (modo local) ---------- */
 function exportar(){
