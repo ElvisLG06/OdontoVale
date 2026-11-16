@@ -286,6 +286,12 @@ a.btn{text-decoration:none;color:var(--ink)}
 @keyframes fade{from{opacity:0}to{opacity:1}}
 @media (prefers-reduced-motion:reduce){.scrim,.sheet{animation:none}}
 
+.ctrlrow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:6px}
+.ctrlrow .chip{padding:0 4px;font-size:13px;height:38px}
+.citaacc{display:flex;flex-direction:column;gap:10px;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+.cancelbtn{flex-direction:column;height:auto;padding:10px 14px;gap:2px;color:var(--warn);border-color:var(--warn-soft)}
+.cancelbtn small{font-size:12px;font-weight:500;color:var(--muted)}
+.delbtn{color:var(--warn);font-size:13px;padding:6px 0;align-self:center;text-decoration:underline;text-underline-offset:3px}
 form .f{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
 form .f.resalta input{border-color:var(--accent);background:var(--accent-soft)}
 form .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -337,7 +343,7 @@ setTimeout(function(){s.classList.add("out");document.documentElement.classList.
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
 <script>
 /* Actualización automática: al abrir o volver a la app, si hay una versión nueva se recarga sola */
-const APP_VERSION = "2026.11.16-1709";
+const APP_VERSION = "2026.11.16-1749";
 let recargaPendiente = false;
 async function buscarActualizacion(){
   if (!/^https?:$/.test(location.protocol) || (window.claude && typeof window.claude.use === "function")) return;
@@ -897,13 +903,17 @@ function sheetCita(id){
   const [lbl, cls] = ESTADOS[c.estado]||ESTADOS.programada;
   const p = S.pacientes[c.pacienteId];
   openSheet("Cita", `<div class="phead" style="margin-top:0"><span class="avatar lg">${esc(initials(pacNombre(c.pacienteId)))}</span><div><h2 style="font-size:19px">${esc(pacNombre(c.pacienteId))}</h2><div class="sub">${p&&p.telefono?esc(p.telefono):""}</div></div></div>
-    <dl class="kv"><dt>Fecha</dt><dd style="text-transform:capitalize">${esc(fmtLong(c.fecha))}</dd><dt>Hora</dt><dd class="num">${esc(c.hora)} · ${esc(c.duracion||30)} min</dd><dt>Motivo</dt><dd>${esc(c.motivo||"Consulta")}</dd><dt>Estado</dt><dd><span class="pill ${cls}">${lbl}</span></dd>${c.notas?`<dt>Notas</dt><dd style="white-space:pre-wrap">${esc(c.notas)}</dd>`:""}</dl>
+    <dl class="kv"><dt>Fecha</dt><dd>${esc(fmtLong(c.fecha).replace(/^./,x=>x.toUpperCase()))}</dd><dt>Hora</dt><dd class="num">${esc(c.hora)} · ${esc(c.duracion||30)} min</dd><dt>Motivo</dt><dd>${esc(c.motivo||"Consulta")}</dd><dt>Estado</dt><dd><span class="pill ${cls}">${lbl}</span></dd>${c.notas?`<dt>Notas</dt><dd style="white-space:pre-wrap">${esc(c.notas)}</dd>`:""}</dl>
     ${p&&p.alergias?`<div class="alert">Alergias: ${esc(p.alergias)}</div>`:""}
     <div class="stack">
       ${p?`<button class="btn primary block" data-x="perfil">Abrir perfil del paciente</button>`:""}
       ${c.estado==="programada"?`<div class="btnrow"><button class="btn" data-x="atendida" style="color:var(--ok)">Marcar atendida</button><button class="btn" data-x="no_asistio" style="color:var(--warn)">No asistió</button></div>`:`<button class="btn block" data-x="programada">Volver a “Programada”</button>`}
-      <div style="margin-top:6px"><label>Agendar control desde esta fecha</label><div class="chips" style="margin-top:6px">${[[1,"1 mes"],[3,"3 meses"],[6,"6 meses"],[12,"1 año"]].map(([n,l])=>`<button class="chip" data-ctrl="${n}">+ ${l}</button>`).join("")}<button class="chip" data-ctrl="otra">Otra fecha…</button></div></div>
-      <div class="btnrow" style="margin-top:6px"><button class="btn sm" data-x="editar">Editar / reprogramar</button>${c.estado==="programada"?`<button class="btn sm" data-x="cancelada">Cancelar cita</button>`:""}<button class="btn sm danger" data-x="eliminar">Eliminar</button></div>
+      <div style="margin-top:6px"><label>Agendar control desde esta fecha</label><div class="ctrlrow">${[[1,"1 mes"],[3,"3 meses"],[6,"6 meses"]].map(([n,l])=>`<button class="chip" data-ctrl="${n}">+ ${l}</button>`).join("")}<button class="chip" data-ctrl="otra">Otra fecha</button></div></div>
+      <div class="citaacc">
+        <button class="btn block" data-x="editar">Editar o reprogramar</button>
+        ${c.estado==="programada"?`<button class="btn block cancelbtn" data-x="cancelada"><span>Cancelar cita</span><small>Queda en el historial como cancelada</small></button>`:""}
+        <button class="link delbtn" data-x="eliminar">Eliminar cita del registro</button>
+      </div>
     </div>`, bd => {
       bd.addEventListener("click", e => {
         const ctrl = e.target.closest("[data-ctrl]");
@@ -916,7 +926,7 @@ function sheetCita(id){
           if (a==="atendida"){ sheetCita(id); toast("Cita marcada como atendida. ¿Agendas su próximo control?"); } else { closeSheet(); toast("Estado actualizado"); }
         }
         else if (a==="editar") formCita({id});
-        else if (a==="eliminar") confirmSheet("Eliminar cita", "Esta cita se borrará del calendario. No se puede deshacer.", "Eliminar", () => { removeDoc("citas", id); toast("Cita eliminada"); });
+        else if (a==="eliminar") confirmSheet("Eliminar cita", "La cita se borrará por completo, como si nunca se hubiera agendado. Úsalo solo si se registró por error. Si el paciente no vendrá, mejor usa “Cancelar cita”.", "Eliminar", () => { removeDoc("citas", id); toast("Cita eliminada"); });
       });
   });
 }
