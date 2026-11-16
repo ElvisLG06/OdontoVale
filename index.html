@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>OdontoVale · Consultorio Dra. Valeria</title>
+<meta name="theme-color" content="#FFFFFF">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="OdontoVale">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2216%22 fill=%22%238C6A4F%22/%3E%3Cpath d=%22M20 18c-5 0-8 4-8 10 0 8 4 12 6 20 1 4 5 4 6 0l2-9c1-3 6-3 7 0l2 9c1 4 5 4 6 0 2-8 6-12 6-20 0-6-3-10-8-10-4 0-6 2-9 2s-5-2-10-2z%22 fill=%22%23fff%22/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: app móvil de una columna, barra inferior fija, hojas deslizables desde abajo. */
+:root{
+  --bg:#FFFFFF;
+  --sand:#F8F3EC;      /* beige muy suave: fondos de zona */
+  --beige:#EFE5D7;     /* beige: chips, bordes activos */
+  --line:#EDE6DC;
+  --ink:#33291F;
+  --muted:#86776A;
+  --accent:#8C6A4F;    /* tostado */
+  --accent-soft:#F3EADF;
+  --ok:#5E8B6B; --ok-soft:#E8F1EA;
+  --warn:#B4674F; --warn-soft:#F7E6E0;
+  --red:#D8574B; --blue:#3E74C9;
+  --display:"Outfit", "Manrope", system-ui, sans-serif;
+  --body:"Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --r:16px;
+  color-scheme: light;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:8px}
+h1,h2,h3{font-family:var(--display);font-weight:600;margin:0;text-wrap:balance;letter-spacing:-.01em}
+.num{font-variant-numeric:tabular-nums}
+
+#app{max-width:520px;margin:0 auto;min-height:100%;padding:calc(env(safe-area-inset-top) + 18px) 18px calc(env(safe-area-inset-bottom) + 96px);}
+.top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:16px}
+.eyebrow{font-size:13px;color:var(--muted);font-weight:600}
+.top h1{font-size:26px;line-height:1.15;margin-top:2px}
+.iconbtn{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--bg);display:grid;place-items:center;flex:none}
+.iconbtn svg{width:20px;height:20px;stroke:var(--ink)}
+
+/* buscador */
+.search{position:relative;margin-bottom:16px}
+.search input{width:100%;height:48px;border-radius:14px;border:1px solid var(--line);background:var(--sand);padding:0 14px 0 42px;font-size:15px}
+.search input:focus{outline:none;border-color:var(--accent);background:var(--bg)}
+.search svg{position:absolute;left:14px;top:14px;width:20px;height:20px;stroke:var(--muted)}
+.results{position:absolute;z-index:20;left:0;right:0;top:54px;background:var(--bg);border:1px solid var(--line);border-radius:14px;box-shadow:0 12px 30px rgba(60,40,20,.12);overflow:hidden;max-height:340px;overflow-y:auto}
+.results button{display:flex;gap:12px;align-items:center;width:100%;text-align:left;border:0;background:none;padding:10px 14px;border-bottom:1px solid var(--line)}
+.results button:last-child{border-bottom:0}
+.results button:active{background:var(--sand)}
+.results .empty{padding:14px;color:var(--muted)}
+
+.avatar{width:38px;height:38px;border-radius:50%;background:var(--beige);color:var(--accent);display:grid;place-items:center;font-weight:700;font-size:14px;flex:none}
+.avatar.lg{width:60px;height:60px;font-size:20px}
+.sub{font-size:13px;color:var(--muted)}
+
+/* resumen del día */
+.now{background:var(--sand);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;margin-bottom:16px;display:flex;gap:14px;align-items:center}
+.now .big{font-family:var(--display);font-size:30px;font-weight:600;line-height:1;color:var(--accent)}
+.now .lbl{font-size:12px;color:var(--muted);font-weight:600}
+.now .who{font-weight:700}
+.now .sep{width:1px;align-self:stretch;background:var(--line)}
+
+.dayhead{display:flex;align-items:center;justify-content:space-between;margin:6px 0 10px}
+.dayhead h2{font-size:18px}
+.daynav{display:flex;gap:6px}
+.daynav button{height:34px;min-width:34px;padding:0 10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);font-size:13px;font-weight:600}
+
+/* lista de citas */
+.timeline{display:flex;flex-direction:column;gap:10px}
+.cita{display:grid;grid-template-columns:58px 1fr auto;gap:12px;align-items:center;padding:12px 14px;border-radius:var(--r);border:1px solid var(--line);background:var(--bg);text-align:left;width:100%;position:relative}
+.cita:active{background:var(--sand)}
+.cita .hora{font-family:var(--display);font-weight:600;font-size:17px}
+.cita .hora small{display:block;font-family:var(--body);font-size:11px;color:var(--muted);font-weight:500}
+.cita .nombre{font-weight:700;line-height:1.25}
+.cita.ahora{border-color:var(--accent);background:var(--accent-soft)}
+.cita.ahora::before{content:"";position:absolute;left:-1px;top:12px;bottom:12px;width:4px;border-radius:4px;background:var(--accent)}
+.cita.done{opacity:.72}
+.pill{font-size:11px;font-weight:700;padding:4px 9px;border-radius:99px;white-space:nowrap;background:var(--beige);color:var(--accent)}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.now{background:var(--accent);color:#fff}
+.pill.muted{background:var(--sand);color:var(--muted)}
+
+.emptybox{border:1.5px dashed var(--beige);border-radius:var(--r);padding:26px 18px;text-align:center;color:var(--muted)}
+.emptybox b{display:block;color:var(--ink);font-family:var(--display);font-size:17px;margin-bottom:4px}
+
+/* botones */
+.btn{height:46px;padding:0 18px;border-radius:13px;border:1px solid var(--line);background:var(--bg);font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.soft{background:var(--accent-soft);border-color:var(--accent-soft);color:var(--accent)}
+.btn.danger{color:var(--warn);border-color:var(--warn-soft)}
+.btn.sm{height:36px;padding:0 12px;font-size:13px;border-radius:10px}
+.btn.block{width:100%}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap}
+.btnrow .btn{flex:1}
+.link{background:none;border:0;color:var(--accent);font-weight:700;padding:0}
+
+/* barra inferior */
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:30;background:rgba(255,255,255,.94);backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:8px 10px calc(env(safe-area-inset-bottom) + 8px)}
+.tabbar .in{max-width:520px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr 64px 1fr 1fr;align-items:center}
+.tabbar a,.tabbar button.t{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;font-weight:700;color:var(--muted);text-decoration:none;background:none;border:0;padding:4px 0}
+.tabbar svg{width:23px;height:23px;stroke:currentColor}
+.tabbar a.on{color:var(--accent)}
+.fab{width:54px;height:54px;border-radius:18px;border:0;background:var(--accent);color:#fff;display:grid;place-items:center;margin:0 auto;box-shadow:0 8px 20px rgba(140,106,79,.35)}
+.fab svg{width:26px;height:26px;stroke:#fff}
+
+/* calendario */
+.calhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.calhead h2{font-size:20px;text-transform:capitalize}
+.grid7{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.dow{font-size:11px;font-weight:700;color:var(--muted);text-align:center;padding:4px 0}
+.day{aspect-ratio:1/1.05;border-radius:12px;border:1px solid transparent;background:none;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:7px;gap:4px;font-weight:600;font-size:14px}
+.day.out{color:#C9BCAE}
+.day.today{border-color:var(--accent);color:var(--accent)}
+.day.sel{background:var(--accent);color:#fff;border-color:var(--accent)}
+.day.sel .dots i{background:#fff}
+.dots{display:flex;gap:2px;height:6px}
+.dots i{width:5px;height:5px;border-radius:50%;background:var(--accent)}
+.dots i.ok{background:var(--ok)}
+.calbox{background:var(--sand);border-radius:var(--r);padding:10px;margin-bottom:18px}
+.monthstats{display:flex;gap:8px;margin-bottom:14px}
+.stat{flex:1;border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+.stat b{display:block;font-family:var(--display);font-size:22px;line-height:1.1}
+.stat span{font-size:12px;color:var(--muted);font-weight:600}
+
+/* pacientes */
+.plist{display:flex;flex-direction:column}
+.prow{display:flex;gap:12px;align-items:center;padding:12px 2px;border:0;border-bottom:1px solid var(--line);background:none;text-align:left;width:100%}
+.prow .grow{flex:1;min-width:0}
+.prow .nombre{font-weight:700}
+.chev{width:18px;height:18px;stroke:var(--muted);flex:none}
+
+/* perfil */
+.phead{display:flex;gap:14px;align-items:center;margin:4px 0 14px}
+.phead h1{font-size:22px;line-height:1.2}
+.quick{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.quick div{background:var(--sand);border-radius:12px;padding:9px 10px}
+.quick b{display:block;font-size:14px}
+.quick span{font-size:11px;color:var(--muted);font-weight:700}
+.alert{background:var(--warn-soft);color:var(--warn);border-radius:12px;padding:9px 12px;font-size:13px;font-weight:600;margin-bottom:14px}
+.tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 -18px 14px;padding:2px 18px;position:sticky;top:0;background:var(--bg);z-index:5;padding-top:8px;padding-bottom:8px}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{flex:none;height:36px;padding:0 14px;border-radius:99px;border:1px solid var(--line);background:var(--bg);font-weight:700;font-size:13px;color:var(--muted)}
+.tabs button.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.card{border:1px solid var(--line);border-radius:var(--r);padding:14px;background:var(--bg)}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:12px 14px}
+.fields .full{grid-column:1/-1}
+.fields dt{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.fields dd{margin:2px 0 0;font-weight:600;word-break:break-word}
+.sectionhead{display:flex;justify-content:space-between;align-items:center;margin:4px 0 10px}
+.sectionhead h3{font-size:16px}
+.list{display:flex;flex-direction:column;gap:8px}
+.item{border:1px solid var(--line);border-radius:14px;padding:11px 13px;display:flex;gap:10px;align-items:flex-start}
+.item .grow{flex:1;min-width:0}
+.item .t{font-weight:700}
+.item .d{font-size:13px;color:var(--muted)}
+.item p{margin:4px 0 0;white-space:pre-wrap}
+.amt{font-weight:700;white-space:nowrap}
+.totals{background:var(--sand);border-radius:14px;padding:12px 14px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.totals b{display:block;font-family:var(--display);font-size:17px}
+.totals span{font-size:11px;color:var(--muted);font-weight:700}
+.mini{border:0;background:var(--sand);border-radius:9px;height:30px;padding:0 10px;font-size:12px;font-weight:700;color:var(--accent)}
+
+/* odontograma */
+.tools{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.tool{height:34px;padding:0 11px;border-radius:99px;border:1px solid var(--line);background:var(--bg);font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px}
+.tool i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.tool.on{border-color:var(--ink);background:var(--ink);color:#fff}
+.odo{overflow-x:auto;background:var(--sand);border-radius:var(--r);padding:14px 10px;-webkit-overflow-scrolling:touch}
+.arch{display:flex;gap:3px;width:max-content;margin:0 auto}
+.arch .mid{width:2px;background:var(--beige);margin:0 4px;border-radius:2px}
+.tooth{display:flex;flex-direction:column;align-items:center;gap:3px}
+.tooth .n{font-size:11px;font-weight:700;color:var(--muted)}
+.tooth svg{width:38px;height:38px;display:block}
+.tooth svg .s{fill:#fff;stroke:#BFAF9C;stroke-width:1;cursor:pointer}
+.tooth svg .s.caries{fill:var(--red)}
+.tooth svg .s.obt{fill:var(--blue)}
+.tooth.ausente svg .s{fill:#F3EFEA}
+.archgap{height:14px}
+.hint{font-size:12px;color:var(--muted);text-align:center;margin-top:8px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--muted);margin:10px 0 14px}
+
+/* hojas */
+.scrim{position:fixed;inset:0;background:rgba(40,28,18,.32);z-index:50;display:flex;align-items:flex-end;justify-content:center;animation:fade .18s ease}
+.sheet{background:var(--bg);width:100%;max-width:520px;max-height:92%;border-radius:22px 22px 0 0;display:flex;flex-direction:column;animation:up .22s ease}
+.sheet .hd{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 10px;border-bottom:1px solid var(--line)}
+.sheet .hd h2{font-size:19px}
+.sheet .bd{padding:14px 18px calc(env(safe-area-inset-bottom) + 18px);overflow-y:auto}
+.grab{width:40px;height:4px;border-radius:4px;background:var(--beige);margin:8px auto 0}
+@keyframes up{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){.scrim,.sheet{animation:none}}
+
+form .f{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+form .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+label{font-size:12px;font-weight:700;color:var(--muted)}
+input[type=text],input[type=tel],input[type=email],input[type=date],input[type=time],input[type=number],input:not([type]),select,textarea{width:100%;min-height:46px;border:1px solid var(--line);border-radius:12px;background:var(--sand);padding:10px 12px;font-size:16px}
+textarea{min-height:90px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);background:var(--bg)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{height:34px;padding:0 12px;border-radius:99px;border:1px solid var(--line);background:var(--bg);font-size:13px;font-weight:600}
+.chip.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.picked{display:flex;align-items:center;gap:10px;border:1px solid var(--accent);background:var(--accent-soft);border-radius:12px;padding:8px 10px}
+.picked .grow{flex:1;font-weight:700}
+.suggest{border:1px solid var(--line);border-radius:12px;margin-top:6px;overflow:hidden}
+.suggest button{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid var(--line);background:var(--bg);padding:10px 12px}
+.suggest button:last-child{border-bottom:0}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin-bottom:14px}
+.kv dt{color:var(--muted);font-size:13px;font-weight:600}
+.kv dd{margin:0;font-weight:600}
+.stack{display:flex;flex-direction:column;gap:8px}
+.notice{font-size:12px;color:var(--muted);background:var(--sand);border-radius:10px;padding:8px 12px;margin-bottom:14px}
+.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 92px);transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:12px;font-size:14px;font-weight:600;z-index:60;max-width:90%;text-align:center}
+.loading{padding:60px 0;text-align:center;color:var(--muted)}
+.footnote{margin-top:22px;text-align:center}
+</style>
+</head>
+<body>
+<div id="app"><div class="loading">Cargando tu consultorio…</div></div>
+
+<nav class="tabbar" aria-label="Secciones">
+  <div class="in">
+    <a href="#hoy" data-nav="hoy"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>Hoy</a>
+    <a href="#calendario" data-nav="calendario"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>Calendario</a>
+    <button class="fab" id="fab" aria-label="Nueva cita"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+    <a href="#pacientes" data-nav="pacientes"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.5" r="3.5"/><path d="M2.5 20c.6-3.4 3.2-5.5 6.5-5.5s5.9 2.1 6.5 5.5"/><path d="M16 5.2a3.3 3.3 0 0 1 0 6.6M18 14.8c1.9.7 3.1 2.4 3.5 5.2"/></svg>Pacientes</a>
+    <button class="t" id="navNuevoPac"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="8.5" r="3.5"/><path d="M3.5 20c.6-3.4 3.2-5.5 6.5-5.5 1.5 0 2.9.4 4 1.2M18 14v6M15 17h6"/></svg>Nuevo</button>
+  </div>
+</nav>
+
+<script>
+"use strict";
+/* ---------- utilidades ---------- */
+const $ = (s, el=document) => el.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const uid = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+const pad = n => String(n).padStart(2,"0");
+const toStr = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const parse = s => { const [y,m,d] = s.split("-").map(Number); return new Date(y, m-1, d); };
+const todayStr = () => toStr(new Date());
+const addDays = (s, n) => { const d = parse(s); d.setDate(d.getDate()+n); return toStr(d); };
+const addMonths = (s, n) => { const d = parse(s); const day = d.getDate(); d.setDate(1); d.setMonth(d.getMonth()+n); const last = new Date(d.getFullYear(), d.getMonth()+1, 0).getDate(); d.setDate(Math.min(day,last)); return toStr(d); };
+const DIAS = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
+const MESES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+const fmtLong = s => { const d = parse(s); return `${DIAS[d.getDay()]} ${d.getDate()} de ${MESES[d.getMonth()]}`; };
+const fmtShort = s => { if(!s) return "—"; const d = parse(s); return `${d.getDate()} ${MESES[d.getMonth()].slice(0,3)} ${d.getFullYear()}`; };
+const money = n => "S/ " + (Number(n)||0).toLocaleString("es-PE",{minimumFractionDigits:2, maximumFractionDigits:2});
+const initials = n => (n||"?").trim().split(/\s+/).slice(0,2).map(w=>w[0]).join("").toUpperCase();
+const age = nac => { if(!nac) return null; const b = parse(nac), t = new Date(); let a = t.getFullYear()-b.getFullYear(); if (t.getMonth()<b.getMonth() || (t.getMonth()===b.getMonth() && t.getDate()<b.getDate())) a--; return a; };
+const minutes = h => { const [a,b] = (h||"0:0").split(":").map(Number); return a*60+b; };
+const norm = s => (s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();
+const ICON = {
+  back:'<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
+  close:'<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  search:'<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4-4"/></svg>',
+  chev:'<svg class="chev" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>',
+  edit:'<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>',
+};
+const MOTIVOS = ["Evaluación","Limpieza","Curación","Endodoncia","Extracción","Control de ortodoncia","Blanqueamiento","Prótesis","Control"];
+const ESTADOS = {programada:["Programada",""], atendida:["Atendida","ok"], no_asistio:["No asistió","warn"], cancelada:["Cancelada","muted"]};
+
+/* ---------- almacenamiento ---------- */
+const S = { pacientes:{}, citas:{}, ready:false, mode:null, offline:false };
+const UI = { route:"hoy", dia:todayStr(), mes:todayStr().slice(0,8)+"01", calSel:todayStr(), tab:"datos", tool:"caries", q:"", pq:"" };
+let DB = null;
+const PATH = { pacientes:"clinica/main/pacientes", citas:"clinica/main/citas" };
+const LSKEY = "consultorio-valeria-v1";
+const writing = {};
+
+let LS_OK = true;
+try { localStorage.setItem(LSKEY+"-t","1"); localStorage.removeItem(LSKEY+"-t"); } catch(e){ LS_OK = false; }
+function localLoad(){ try { const d = JSON.parse(localStorage.getItem(LSKEY)||"{}"); S.pacientes = d.pacientes||{}; S.citas = d.citas||{}; } catch(e){} }
+function localSave(){ try { localStorage.setItem(LSKEY, JSON.stringify({pacientes:S.pacientes, citas:S.citas})); } catch(e){} }
+
+async function queueWrite(kind, id, data){
+  const key = kind+"/"+id;
+  const w = writing[key] || (writing[key] = {busy:false, has:false, next:null});
+  w.next = data; w.has = true;
+  if (w.busy) return;
+  w.busy = true;
+  while (w.has){
+    const d = w.next; w.has = false;
+    const ref = DB.collection(PATH[kind]).doc(id);
+    try { if (d === null) await ref.delete(); else await ref.set(d); }
+    catch(e){
+      if (e && e.code === "unavailable"){ await new Promise(r=>setTimeout(r, 600+Math.random()*800)); try{ if(d===null) await ref.delete(); else await ref.set(d);}catch(e2){ toast("No se pudo guardar. Revisa tu conexión."); } }
+      else if (e && e.code === "quota_exceeded") toast("Se llenó el espacio de datos. Elimina registros antiguos.");
+      else toast("No se pudo guardar este cambio.");
+    }
+  }
+  w.busy = false;
+}
+function save(kind, id, data){
+  data = JSON.parse(JSON.stringify(data));
+  data.actualizado = Date.now();
+  S[kind][id] = data;
+  if (S.mode === "db") queueWrite(kind, id, data); else localSave();
+  render();
+}
+function removeDoc(kind, id){
+  delete S[kind][id];
+  if (S.mode === "db") queueWrite(kind, id, null); else localSave();
+  render();
+}
+
+async function boot(){
+  const hasClaude = typeof window.claude === "object" && window.claude && typeof window.claude.use === "function";
+  if (hasClaude){
+    try { DB = await window.claude.use("db"); } catch(e){ DB = null; }
+  }
+  if (!DB){ S.mode = "local"; localLoad(); try { const u = localStorage.getItem(LSKEY+"-copia"); if (u) S.ultimaCopia = fmtShort(u); } catch(e){} S.ready = true; render(); return; }
+  S.mode = "db";
+  let got = {pacientes:false, citas:false};
+  const timer = setTimeout(()=>{ if(!S.ready){ S.ready = true; S.offline = true; render(); } }, 10000);
+  for (const kind of ["pacientes","citas"]){
+    DB.collection(PATH[kind]).onSnapshot(snap => {
+      const m = {};
+      snap.docs.forEach(d => { m[d.id] = JSON.parse(JSON.stringify(d.data())); });
+      // conserva escrituras propias aún en cola
+      for (const k in writing){ if (k.startsWith(kind+"/") && (writing[k].busy)){ const id = k.split("/")[1]; if (S[kind][id]) m[id] = S[kind][id]; else delete m[id]; } }
+      S[kind] = m;
+      if (!snap.metadata.fromCache){ got[kind] = true; if (got.pacientes && got.citas){ clearTimeout(timer); S.offline = false; } }
+      if (got.pacientes && got.citas) S.ready = true;
+      if (S.ready) render();
+    }, err => { clearTimeout(timer); S.ready = true; S.offline = true; render(); });
+  }
+}
+
+/* ---------- consultas ---------- */
+const pacientesOrden = () => Object.entries(S.pacientes).map(([id,p])=>({id,...p})).sort((a,b)=>norm(a.nombre).localeCompare(norm(b.nombre)));
+const citasDe = fecha => Object.entries(S.citas).map(([id,c])=>({id,...c})).filter(c=>c.fecha===fecha).sort((a,b)=>minutes(a.hora)-minutes(b.hora));
+const citasPaciente = pid => Object.entries(S.citas).map(([id,c])=>({id,...c})).filter(c=>c.pacienteId===pid).sort((a,b)=>(a.fecha+a.hora).localeCompare(b.fecha+b.hora));
+const pacNombre = id => S.pacientes[id]?.nombre || "Paciente eliminado";
+function buscar(q){
+  const t = norm(q).trim(); if (!t) return [];
+  return pacientesOrden().filter(p => norm(p.nombre).includes(t) || (p.dni||"").includes(t) || (p.telefono||"").replace(/\s/g,"").includes(t.replace(/\s/g,""))).slice(0,8);
+}
+function proximaCita(pid){ const hoy = todayStr(); return citasPaciente(pid).find(c => c.fecha >= hoy && c.estado === "programada"); }
+function ultimaVisita(pid){ const hoy = todayStr(); return citasPaciente(pid).filter(c=>c.fecha<=hoy && c.estado==="atendida").pop(); }
+
+/* ---------- router ---------- */
+function readHash(){
+  const h = location.hash.replace("#","");
+  if (h.startsWith("paciente-")){ const id = h.slice(9); if (UI.route !== "paciente" || UI.pid !== id){ UI.tab = "datos"; } UI.route = "paciente"; UI.pid = id; }
+  else if (["hoy","calendario","pacientes"].includes(h)) UI.route = h;
+  else UI.route = "hoy";
+}
+window.addEventListener("hashchange", ()=>{ readHash(); render(); window.scrollTo(0,0); });
+function go(h){ if (location.hash === "#"+h){ readHash(); render(); } else location.hash = h; }
+
+/* ---------- render ---------- */
+function render(){
+  const app = $("#app");
+  document.querySelectorAll("[data-nav]").forEach(a => a.classList.toggle("on", a.dataset.nav === UI.route || (UI.route==="paciente" && a.dataset.nav==="pacientes")));
+  if (!S.ready){ return; }
+  const act = document.activeElement; const fid = act && act.id; const sel = act && act.selectionStart;
+  let html = "";
+  if (UI.route === "hoy") html = vHoy();
+  else if (UI.route === "calendario") html = vCal();
+  else if (UI.route === "pacientes") html = vPacientes();
+  else if (UI.route === "paciente") html = vPerfil();
+  app.innerHTML = html;
+  if (fid){ const el = document.getElementById(fid); if (el && el.focus){ el.focus(); try{ el.setSelectionRange(sel, sel); }catch(e){} } }
+}
+
+function notices(){
+  let n = "";
+  if (S.mode === "local" && !LS_OK) n += `<div class="notice">Este navegador no permite guardar datos (modo incógnito o privado). Los cambios se perderán al cerrar la página.</div>`;
+  if (S.offline) n += `<div class="notice">No se pudo conectar para cargar los datos. Lo que ves puede no estar actualizado.</div>`;
+  return n;
+}
+
+function searchBox(){
+  const r = UI.q ? buscar(UI.q) : null;
+  return `<div class="search">${ICON.search}<input id="q" type="search" placeholder="Buscar paciente por nombre o DNI" autocomplete="off" value="${esc(UI.q)}" aria-label="Buscar paciente">
+  ${r ? `<div class="results">${r.length ? r.map(p=>`<button data-open="${p.id}"><span class="avatar">${esc(initials(p.nombre))}</span><span><b>${esc(p.nombre)}</b><div class="sub">${p.dni?"DNI "+esc(p.dni):""}${p.telefono?" · "+esc(p.telefono):""}</div></span></button>`).join("") : `<div class="empty">Ningún paciente coincide. <button class="link" data-act="nuevoPac">Registrar “${esc(UI.q)}”</button></div>`}</div>` : ""}
+  </div>`;
+}
+
+function citaCard(c, opts={}){
+  const now = new Date(); const isToday = c.fecha === todayStr();
+  const m = now.getHours()*60+now.getMinutes();
+  const enCurso = isToday && c.estado==="programada" && m >= minutes(c.hora) && m < minutes(c.hora)+(Number(c.duracion)||30);
+  const [lbl, cls] = ESTADOS[c.estado] || ESTADOS.programada;
+  const pill = enCurso ? `<span class="pill now">Ahora</span>` : (opts.next ? `<span class="pill">Siguiente</span>` : `<span class="pill ${cls}">${lbl}</span>`);
+  return `<button class="cita ${enCurso?"ahora":""} ${c.estado!=="programada"?"done":""}" data-cita="${c.id}">
+    <div class="hora num">${esc(c.hora)}<small>${esc(c.duracion||30)} min</small></div>
+    <div><div class="nombre">${esc(pacNombre(c.pacienteId))}</div><div class="sub">${esc(c.motivo||"Consulta")}${opts.showDate?" · "+fmtShort(c.fecha):""}</div></div>
+    ${pill}</button>`;
+}
+
+function vHoy(){
+  const hoy = todayStr(); const esHoy = UI.dia === hoy;
+  const lista = citasDe(UI.dia);
+  const vivas = lista.filter(c=>c.estado!=="cancelada");
+  const now = new Date(); const m = now.getHours()*60+now.getMinutes();
+  const pendientes = vivas.filter(c=>c.estado==="programada");
+  const actual = esHoy ? pendientes.find(c => m >= minutes(c.hora) && m < minutes(c.hora)+(Number(c.duracion)||30)) : null;
+  const siguiente = esHoy ? pendientes.find(c => minutes(c.hora) > m) : pendientes[0];
+  const h = now.getHours(); const saludo = h<12?"Buenos días":h<19?"Buenas tardes":"Buenas noches";
+  const destacado = actual || siguiente;
+  const resumen = `<div class="now">
+     <div><div class="big num">${vivas.length}</div><div class="lbl">${vivas.length===1?"cita":"citas"}</div></div>
+     <div class="sep"></div>
+     <div style="flex:1;min-width:0">${destacado ? `<div class="lbl">${actual?"Atendiendo ahora":(esHoy?"Siguiente paciente":"Primera cita")}</div><div class="who">${esc(pacNombre(destacado.pacienteId))}</div><div class="sub">${esc(destacado.hora)} · ${esc(destacado.motivo||"Consulta")}</div>` : `<div class="lbl">${esHoy?"Por hoy":"Este día"}</div><div class="who">${!vivas.length ? "Sin citas agendadas" : pendientes.length ? `${pendientes.length} ${pendientes.length===1?"cita":"citas"} sin marcar como atendida` : "Todas las citas atendidas"}</div>${pendientes.length?`<div class="sub">Tócalas para actualizar su estado</div>`:""}`}</div>
+   </div>`;
+  return `${notices()}
+  <div class="top"><div><div class="eyebrow">${esc(fmtLong(hoy).replace(/^./,c=>c.toUpperCase()))}</div><h1>${saludo}, Dra. Valeria</h1></div></div>
+  ${searchBox()}
+  ${resumen}
+  <div class="dayhead"><h2>${esHoy ? "Agenda de hoy" : esc(fmtLong(UI.dia).replace(/^./,c=>c.toUpperCase()))}</h2>
+    <div class="daynav"><button data-dia="-1" aria-label="Día anterior">‹</button>${esHoy?"":`<button data-dia="0">Hoy</button>`}<button data-dia="1" aria-label="Día siguiente">›</button></div></div>
+  <div class="timeline">${lista.length ? lista.map(c=>citaCard(c,{next: !actual && siguiente && c.id===siguiente.id && esHoy})).join("") :
+    `<div class="emptybox"><b>No hay citas este día</b>Toca el botón + para agendar una.</div>`}</div>
+  ${!Object.keys(S.pacientes).length ? `<div class="footnote"><button class="btn soft sm" data-act="demo">Cargar pacientes de ejemplo</button></div>`:""}`;
+}
+
+function vCal(){
+  const first = parse(UI.mes); const y = first.getFullYear(), mo = first.getMonth();
+  const startDow = (first.getDay()+6)%7; // lunes = 0
+  const start = new Date(y, mo, 1 - startDow);
+  const hoy = todayStr();
+  const byDay = {};
+  Object.values(S.citas).forEach(c => { if (c.estado!=="cancelada") (byDay[c.fecha] ||= []).push(c); });
+  let cells = "";
+  for (let i=0;i<42;i++){
+    const d = new Date(start); d.setDate(start.getDate()+i); const s = toStr(d);
+    if (i>=35 && d.getMonth()!==mo) break;
+    const cs = byDay[s]||[];
+    const dots = cs.slice(0,3).map(c=>`<i class="${c.estado==="atendida"?"ok":""}"></i>`).join("");
+    cells += `<button class="day ${d.getMonth()!==mo?"out":""} ${s===hoy?"today":""} ${s===UI.calSel?"sel":""}" data-cal="${s}" aria-label="${fmtLong(s)}, ${cs.length} citas"><span class="num">${d.getDate()}</span><span class="dots">${dots}</span></button>`;
+  }
+  const mesKey = UI.mes.slice(0,7);
+  const delMes = Object.values(S.citas).filter(c => c.fecha.startsWith(mesKey) && c.estado!=="cancelada");
+  const lista = citasDe(UI.calSel);
+  return `${notices()}
+  <div class="calhead"><h2>${MESES[mo]} ${y}</h2><div class="daynav"><button data-mes="-1" aria-label="Mes anterior">‹</button><button data-mes="0">Hoy</button><button data-mes="1" aria-label="Mes siguiente">›</button></div></div>
+  <div class="monthstats">
+    <div class="stat"><b class="num">${delMes.length}</b><span>citas en el mes</span></div>
+    <div class="stat"><b class="num">${delMes.filter(c=>c.estado==="atendida").length}</b><span>atendidas</span></div>
+    <div class="stat"><b class="num">${delMes.filter(c=>c.estado==="programada").length}</b><span>por atender</span></div>
+  </div>
+  <div class="calbox"><div class="grid7">${["L","M","M","J","V","S","D"].map(d=>`<div class="dow">${d}</div>`).join("")}${cells}</div></div>
+  <div class="dayhead"><h2>${esc(fmtLong(UI.calSel).replace(/^./,c=>c.toUpperCase()))}</h2><button class="btn soft sm" data-act="citaEnDia">+ Cita</button></div>
+  <div class="timeline">${lista.length ? lista.map(c=>citaCard(c)).join("") : `<div class="emptybox"><b>Día libre</b>No hay citas agendadas.</div>`}</div>`;
+}
+
+function vPacientes(){
+  const t = norm(UI.pq).trim();
+  const ps = pacientesOrden().filter(p => !t || norm(p.nombre).includes(t) || (p.dni||"").includes(t));
+  const hayDemo = Object.values(S.pacientes).some(p=>p.demo);
+  return `${notices()}
+  <div class="top"><div><div class="eyebrow">${Object.keys(S.pacientes).length} registrados</div><h1>Pacientes</h1></div><button class="btn primary sm" data-act="nuevoPac">+ Nuevo</button></div>
+  <div class="search">${ICON.search}<input id="pq" type="search" placeholder="Filtrar por nombre o DNI" value="${esc(UI.pq)}" autocomplete="off" aria-label="Filtrar pacientes"></div>
+  <div class="plist">${ps.length ? ps.map(p => { const n = proximaCita(p.id); return `<button class="prow" data-open="${p.id}"><span class="avatar">${esc(initials(p.nombre))}</span><span class="grow"><div class="nombre">${esc(p.nombre)}</div><div class="sub">${n?`Próxima cita: ${fmtShort(n.fecha)} · ${esc(n.motivo||"")}`:(p.dni?"DNI "+esc(p.dni):"Sin próxima cita")}</div></span>${ICON.chev}</button>`; }).join("")
+   : `<div class="emptybox"><b>${t?"Sin resultados":"Aún no hay pacientes"}</b>${t?"Prueba con otro nombre.":"Registra el primero con “+ Nuevo”."}</div>${!Object.keys(S.pacientes).length?`<div class="footnote"><button class="btn soft sm" data-act="demo">Cargar pacientes de ejemplo</button></div>`:""}`}</div>
+  ${hayDemo ? `<div class="footnote"><button class="link" data-act="quitarDemo">Quitar datos de ejemplo</button></div>`:""}
+  ${S.mode==="local" ? `<div class="card" style="margin-top:22px;background:var(--sand);border-color:var(--sand)"><h3 style="font-size:16px;margin-bottom:4px">Copia de seguridad</h3><div class="sub" style="margin-bottom:12px">Los datos se guardan en este celular. Descarga una copia cada cierto tiempo y guárdala en Drive o WhatsApp; con ella puedes recuperarlos o pasarlos a otro equipo.</div><div class="btnrow"><button class="btn sm primary" data-act="exportar">Descargar copia</button><button class="btn sm" data-act="importar">Restaurar copia</button></div><input type="file" id="importFile" accept=".json,application/json" hidden>${S.ultimaCopia?`<div class="sub" style="margin-top:8px">Última copia: ${esc(S.ultimaCopia)}</div>`:""}</div>`:""}`;
+}
+
+/* ----- perfil ----- */
+const TABS = [["datos","Datos"],["odontograma","Odontograma"],["evoluciones","Evoluciones"],["presupuesto","Presupuesto"],["tratamientos","Tratamientos"],["citas","Citas"]];
+function vPerfil(){
+  const p = S.pacientes[UI.pid];
+  if (!p) return `<div class="top"><button class="iconbtn" data-act="back" aria-label="Volver">${ICON.back}</button></div><div class="emptybox"><b>Paciente no encontrado</b>Puede que se haya eliminado.</div>`;
+  const a = age(p.nacimiento); const n = proximaCita(UI.pid); const u = ultimaVisita(UI.pid);
+  const pres = (p.presupuesto||[]); const total = pres.reduce((s,i)=>s+(+i.precio||0),0); const pag = (p.abonos||[]).reduce((s,i)=>s+(+i.monto||0),0);
+  let body = "";
+  if (UI.tab==="datos") body = tDatos(p);
+  else if (UI.tab==="odontograma") body = tOdo(p);
+  else if (UI.tab==="evoluciones") body = tEvo(p);
+  else if (UI.tab==="presupuesto") body = tPres(p);
+  else if (UI.tab==="tratamientos") body = tTrat(p);
+  else body = tCitas(p);
+  return `${notices()}
+  <div class="top"><button class="iconbtn" data-act="back" aria-label="Volver">${ICON.back}</button><button class="btn soft sm" data-act="citaPac">+ Agendar cita</button></div>
+  <div class="phead"><span class="avatar lg">${esc(initials(p.nombre))}</span><div><h1>${esc(p.nombre)}</h1><div class="sub">${a!==null?a+" años":""}${p.dni?" · DNI "+esc(p.dni):""}</div>${p.telefono?`<div class="sub num">${esc(p.telefono)}</div>`:""}</div></div>
+  ${p.alergias ? `<div class="alert">Alergias: ${esc(p.alergias)}</div>`:""}
+  <div class="quick">
+    <div><span>Próxima cita</span><b>${n?fmtShort(n.fecha).replace(/ \d{4}$/,""):"—"}</b></div>
+    <div><span>Última visita</span><b>${u?fmtShort(u.fecha).replace(/ \d{4}$/,""):"—"}</b></div>
+    <div><span>Saldo</span><b class="num">${money(Math.max(total-pag,0)).replace(".00","")}</b></div>
+  </div>
+  <div class="tabs" role="tablist">${TABS.map(([k,l])=>`<button role="tab" class="${UI.tab===k?"on":""}" data-tab="${k}">${l}</button>`).join("")}</div>
+  ${body}`;
+}
+function tDatos(p){
+  const F = [["Nombre completo",p.nombre,1],["DNI",p.dni],["Fecha de nacimiento",p.nacimiento?fmtShort(p.nacimiento):""],["Teléfono",p.telefono],["Correo",p.correo],["Dirección",p.direccion,1],["Alergias",p.alergias,1],["Antecedentes médicos",p.antecedentes,1],["Contacto de emergencia",p.emergencia,1]];
+  return `<div class="card"><dl class="fields">${F.map(([k,v,f])=>`<div class="${f?"full":""}"><dt>${k}</dt><dd>${v?esc(v):'<span class="sub">Sin registrar</span>'}</dd></div>`).join("")}</dl></div>
+  <div class="btnrow" style="margin-top:12px"><button class="btn" data-act="editPac">Editar datos</button></div>
+  <div class="footnote"><button class="link" style="color:var(--warn)" data-act="delPac">Eliminar paciente</button></div>`;
+}
+
+/* odontograma: notación FDI */
+const UP = [18,17,16,15,14,13,12,11,21,22,23,24,25,26,27,28];
+const LOW = [48,47,46,45,44,43,42,41,31,32,33,34,35,36,37,38];
+const TOOLS = [["caries","Caries","s","var(--red)"],["obt","Obturación","s","var(--blue)"],["endo","Endodoncia","t","var(--blue)"],["corona","Corona","t","var(--blue)"],["ext","Extracción indicada","t","var(--red)"],["ausente","Ausente","t","#9C8F82"],["borrar","Borrar","x","#fff"]];
+const CARAS = {V:"vestibular",L:"lingual/palatina",M:"mesial",D:"distal",O:"oclusal/incisal"};
+function geo(n){
+  const q = Math.floor(n/10), upper = q===1||q===2;
+  const right = (q===1||q===4) ? "M" : "D", left = right==="M" ? "D" : "M";
+  return {top: upper?"V":"L", bottom: upper?"L":"V", left, right};
+}
+function toothSVG(n, t){
+  const g = geo(n), c = (t&&t.caras)||{}, e = (t&&t.estado)||{};
+  const cl = k => `s ${c[k]||""}`;
+  let over = "";
+  if (e.endo) over += `<line x1="20" y1="-2" x2="20" y2="42" stroke="var(--blue)" stroke-width="3"/>`;
+  if (e.corona) over += `<circle cx="20" cy="20" r="18.5" fill="none" stroke="var(--blue)" stroke-width="2.5"/>`;
+  if (e.ext) over += `<path d="M4 4L36 36M36 4L4 36" stroke="var(--red)" stroke-width="3" stroke-linecap="round"/>`;
+  if (e.ausente) over += `<path d="M4 4L36 36M36 4L4 36" stroke="var(--blue)" stroke-width="3" stroke-linecap="round"/>`;
+  return `<svg viewBox="-1 -1 42 42" aria-hidden="true">
+    <polygon class="${cl(g.top)}" data-s="${g.top}" points="0,0 40,0 27,13 13,13"/>
+    <polygon class="${cl(g.bottom)}" data-s="${g.bottom}" points="0,40 40,40 27,27 13,27"/>
+    <polygon class="${cl(g.left)}" data-s="${g.left}" points="0,0 13,13 13,27 0,40"/>
+    <polygon class="${cl(g.right)}" data-s="${g.right}" points="40,0 27,13 27,27 40,40"/>
+    <rect class="${cl("O")}" data-s="O" x="13" y="13" width="14" height="14"/>
+    <g pointer-events="none">${over}</g></svg>`;
+}
+function tOdo(p){
+  const o = p.odontograma||{};
+  const tooth = (n, numFirst) => `<div class="tooth ${o[n]?.estado?.ausente?"ausente":""}" data-t="${n}" role="button" aria-label="Pieza ${n}">${numFirst?`<span class="n">${n}</span>`:""}${toothSVG(n,o[n])}${numFirst?"":`<span class="n">${n}</span>`}</div>`;
+  const row = (arr, numFirst) => `<div class="arch">${arr.slice(0,8).map(n=>tooth(n,numFirst)).join("")}<div class="mid"></div>${arr.slice(8).map(n=>tooth(n,numFirst)).join("")}</div>`;
+  const hall = [];
+  Object.keys(o).sort().forEach(n => { const t = o[n]; const parts = [];
+    const cs = Object.entries(t.caras||{}); const car = cs.filter(([,v])=>v==="caries").map(([k])=>k), ob = cs.filter(([,v])=>v==="obt").map(([k])=>k);
+    if (car.length) parts.push(`caries ${car.join("")}`); if (ob.length) parts.push(`obturación ${ob.join("")}`);
+    const e = t.estado||{}; if(e.endo) parts.push("endodoncia"); if(e.corona) parts.push("corona"); if(e.ext) parts.push("extracción indicada"); if(e.ausente) parts.push("ausente");
+    if (parts.length) hall.push(`<div class="item"><div class="grow"><span class="t num">Pieza ${n}</span> <span class="d">${parts.join(" · ")}</span></div></div>`);
+  });
+  return `<div class="tools" role="radiogroup" aria-label="Herramienta">${TOOLS.map(([k,l,,col])=>`<button class="tool ${UI.tool===k?"on":""}" data-tool="${k}" role="radio" aria-checked="${UI.tool===k}"><i style="background:${col};${k==="borrar"?"border:1px solid #BFAF9C":""}"></i>${l}</button>`).join("")}</div>
+  <div class="odo" id="odo">${row(UP,true)}<div class="archgap"></div>${row(LOW,false)}</div>
+  <div class="hint">Elige una herramienta y toca la cara o la pieza. Desliza para ver toda la arcada.</div>
+  <div class="legend"><span><b style="color:var(--red)">Rojo</b>: por tratar</span><span><b style="color:var(--blue)">Azul</b>: tratado / existente</span><span>V M D L O: caras</span></div>
+  <div class="sectionhead"><h3>Hallazgos</h3>${hall.length?`<button class="mini" data-act="limpiarOdo">Limpiar todo</button>`:""}</div>
+  <div class="list">${hall.length?hall.join(""):`<div class="emptybox">Sin hallazgos registrados.</div>`}</div>`;
+}
+function tEvo(p){
+  const ev = [...(p.evoluciones||[])].sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  return `<div class="sectionhead"><h3>Evoluciones</h3><button class="btn primary sm" data-act="addEvo">+ Nueva</button></div>
+  <div class="list">${ev.length?ev.map(e=>`<div class="item"><div class="grow"><div class="d">${fmtShort(e.fecha)}${e.pieza?" · Pieza "+esc(e.pieza):""}</div><p>${esc(e.texto)}</p></div><button class="mini" data-edit-evo="${e.id}">Editar</button></div>`).join(""):`<div class="emptybox"><b>Sin evoluciones</b>Anota lo que hiciste en cada sesión.</div>`}</div>`;
+}
+function tPres(p){
+  const it = p.presupuesto||[]; const ab = [...(p.abonos||[])].sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  const total = it.reduce((s,i)=>s+(+i.precio||0),0), pag = ab.reduce((s,i)=>s+(+i.monto||0),0);
+  return `<div class="totals"><div><span>Presupuesto</span><b class="num">${money(total)}</b></div><div><span>Pagado</span><b class="num" style="color:var(--ok)">${money(pag)}</b></div><div><span>Saldo</span><b class="num" style="color:${total-pag>0?"var(--warn)":"var(--ink)"}">${money(Math.max(total-pag,0))}</b></div></div>
+  <div class="sectionhead"><h3>Tratamientos presupuestados</h3><button class="btn primary sm" data-act="addPres">+ Agregar</button></div>
+  <div class="list">${it.length?it.map(i=>`<div class="item"><div class="grow"><div class="t">${esc(i.desc)}</div><div class="d">${i.pieza?"Pieza "+esc(i.pieza)+" · ":""}${i.estado==="realizado"?`<span style="color:var(--ok);font-weight:700">Realizado</span>`:"Pendiente"}</div></div><div style="text-align:right"><div class="amt num">${money(i.precio)}</div>${i.estado!=="realizado"?`<button class="mini" style="margin-top:4px" data-hecho="${i.id}">Marcar hecho</button>`:`<button class="mini" style="margin-top:4px" data-edit-pres="${i.id}">Editar</button>`}</div></div>`).join(""):`<div class="emptybox"><b>Sin presupuesto</b>Agrega los tratamientos y su precio.</div>`}</div>
+  <div class="sectionhead" style="margin-top:18px"><h3>Pagos</h3><button class="btn soft sm" data-act="addAbono">+ Registrar pago</button></div>
+  <div class="list">${ab.length?ab.map(a=>`<div class="item"><div class="grow"><div class="t num">${money(a.monto)}</div><div class="d">${fmtShort(a.fecha)}${a.nota?" · "+esc(a.nota):""}</div></div><button class="mini" data-del-abono="${a.id}">Quitar</button></div>`).join(""):`<div class="emptybox">Aún no hay pagos.</div>`}</div>`;
+}
+function tTrat(p){
+  const tr = [...(p.tratamientos||[])].sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  return `<div class="sectionhead"><h3>Tratamientos realizados</h3><button class="btn primary sm" data-act="addTrat">+ Agregar</button></div>
+  <div class="list">${tr.length?tr.map(t=>`<div class="item"><div class="grow"><div class="t">${esc(t.desc)}</div><div class="d">${fmtShort(t.fecha)}${t.pieza?" · Pieza "+esc(t.pieza):""}</div></div><div style="text-align:right"><div class="amt num">${t.monto?money(t.monto):""}</div><button class="mini" style="margin-top:4px" data-edit-trat="${t.id}">Editar</button></div></div>`).join(""):`<div class="emptybox"><b>Sin tratamientos</b>Al marcar un tratamiento del presupuesto como hecho, aparece aquí.</div>`}</div>`;
+}
+function tCitas(p){
+  const cs = citasPaciente(UI.pid); const hoy = todayStr();
+  const fut = cs.filter(c=>c.fecha>=hoy && c.estado==="programada"), pas = cs.filter(c=>!(c.fecha>=hoy && c.estado==="programada")).reverse();
+  return `<div class="sectionhead"><h3>Próximas</h3><button class="btn primary sm" data-act="citaPac">+ Agendar</button></div>
+  <div class="timeline">${fut.length?fut.map(c=>citaCard(c,{showDate:1})).join(""):`<div class="emptybox">Sin citas próximas.</div>`}</div>
+  <div class="sectionhead" style="margin-top:18px"><h3>Historial</h3></div>
+  <div class="timeline">${pas.length?pas.map(c=>citaCard(c,{showDate:1})).join(""):`<div class="emptybox">Sin citas anteriores.</div>`}</div>`;
+}
+
+/* ---------- hojas y formularios ---------- */
+let sheetEl = null;
+function openSheet(title, body, onMount){
+  closeSheet();
+  sheetEl = document.createElement("div");
+  sheetEl.className = "scrim";
+  sheetEl.innerHTML = `<div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(title)}"><div class="grab"></div><div class="hd"><h2>${esc(title)}</h2><button class="iconbtn" data-close aria-label="Cerrar">${ICON.close}</button></div><div class="bd">${body}</div></div>`;
+  sheetEl.addEventListener("click", e => { if (e.target === sheetEl || e.target.closest("[data-close]")) closeSheet(); });
+  document.body.appendChild(sheetEl);
+  document.body.style.overflow = "hidden";
+  onMount && onMount($(".bd", sheetEl));
+}
+function closeSheet(){ if (sheetEl){ sheetEl.remove(); sheetEl = null; document.body.style.overflow = ""; } }
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeSheet(); });
+let toastT;
+function toast(msg){ let t = $(".toast"); if (!t){ t = document.createElement("div"); t.className = "toast"; t.setAttribute("role","status"); document.body.appendChild(t); } t.textContent = msg; clearTimeout(toastT); toastT = setTimeout(()=>t.remove(), 2600); }
+function confirmSheet(title, text, label, fn){
+  openSheet(title, `<p style="margin:0 0 16px">${esc(text)}</p><div class="btnrow"><button class="btn" data-close>Cancelar</button><button class="btn primary" id="okc" style="background:var(--warn);border-color:var(--warn)">${esc(label)}</button></div>`, bd => { $("#okc", bd).onclick = () => { closeSheet(); fn(); }; });
+}
+const val = (bd, id) => ($("#"+id, bd)?.value || "").trim();
+
+function formPaciente(id, nombreInicial){
+  const p = id ? S.pacientes[id] : {nombre:nombreInicial||""};
+  const f = (k,l,t="text",ph="") => `<div class="f"><label for="pf-${k}">${l}</label><input id="pf-${k}" type="${t}" value="${esc(p[k]||"")}" placeholder="${ph}"></div>`;
+  openSheet(id?"Editar paciente":"Nuevo paciente", `<form id="pform">
+    ${f("nombre","Nombre completo *","text","Ej. María Torres Quispe")}
+    <div class="two">${f("dni","DNI","text","8 dígitos")}${f("nacimiento","Fecha de nacimiento","date")}</div>
+    <div class="two">${f("telefono","Teléfono","tel","9xx xxx xxx")}${f("correo","Correo","email")}</div>
+    ${f("direccion","Dirección")}
+    <div class="f"><label for="pf-alergias">Alergias</label><input id="pf-alergias" value="${esc(p.alergias||"")}" placeholder="Ej. Penicilina, látex"></div>
+    <div class="f"><label for="pf-antecedentes">Antecedentes médicos</label><textarea id="pf-antecedentes" placeholder="Enfermedades, medicación, embarazo…">${esc(p.antecedentes||"")}</textarea></div>
+    ${f("emergencia","Contacto de emergencia","text","Nombre y teléfono")}
+    <button class="btn primary block" type="submit">${id?"Guardar cambios":"Registrar paciente"}</button></form>`, bd => {
+      setTimeout(()=>$("#pf-nombre",bd).focus(), 50);
+      $("#pform",bd).onsubmit = e => { e.preventDefault();
+        const nombre = val(bd,"pf-nombre"); if (!nombre){ toast("Escribe el nombre del paciente."); return; }
+        const data = {...p}; ["nombre","dni","nacimiento","telefono","correo","direccion","alergias","antecedentes","emergencia"].forEach(k => data[k] = val(bd,"pf-"+k));
+        const nid = id || uid("p"); if (!id) data.creado = Date.now();
+        save("pacientes", nid, data); closeSheet(); UI.q = ""; toast(id?"Datos actualizados":"Paciente registrado"); go("paciente-"+nid);
+      };
+  });
+}
+
+function formCita(opts={}){
+  const c = opts.id ? {...S.citas[opts.id]} : {fecha:opts.fecha||todayStr(), hora:opts.hora||"09:00", duracion:opts.duracion||30, motivo:opts.motivo||"", pacienteId:opts.pacienteId||"", estado:"programada", notas:""};
+  let pid = c.pacienteId;
+  const picker = () => pid ? `<div class="picked"><span class="avatar">${esc(initials(pacNombre(pid)))}</span><span class="grow">${esc(pacNombre(pid))}</span><button type="button" class="mini" id="cambiar">Cambiar</button></div>` :
+    `<input id="cf-pq" placeholder="Busca o escribe un nombre nuevo" autocomplete="off"><div id="cf-sug"></div>`;
+  openSheet(opts.id?"Editar cita":(opts.titulo||"Nueva cita"), `<form id="cform">
+    <div class="f"><label for="cf-pq">Paciente *</label><div id="cf-pick">${picker()}</div></div>
+    <div class="two"><div class="f"><label for="cf-fecha">Fecha</label><input id="cf-fecha" type="date" value="${esc(c.fecha)}"></div><div class="f"><label for="cf-hora">Hora</label><input id="cf-hora" type="time" step="900" value="${esc(c.hora)}"></div></div>
+    <div class="f"><label>Duración</label><div class="chips" id="cf-dur">${[30,45,60,90].map(d=>`<button type="button" class="chip ${+c.duracion===d?"on":""}" data-d="${d}">${d} min</button>`).join("")}</div></div>
+    <div class="f"><label for="cf-motivo">Motivo</label><div class="chips" id="cf-mots" style="margin-bottom:6px">${MOTIVOS.map(m=>`<button type="button" class="chip ${c.motivo===m?"on":""}" data-m="${m}">${m}</button>`).join("")}</div><input id="cf-motivo" value="${esc(c.motivo)}" placeholder="U otro motivo"></div>
+    <div class="f"><label for="cf-notas">Notas</label><textarea id="cf-notas" placeholder="Opcional">${esc(c.notas||"")}</textarea></div>
+    <button class="btn primary block" type="submit">${opts.id?"Guardar cambios":"Agendar cita"}</button></form>`, bd => {
+      let dur = +c.duracion || 30;
+      const wire = () => {
+        const pq = $("#cf-pq", bd);
+        if (pq){ pq.oninput = () => { const r = buscar(pq.value); const v = pq.value.trim();
+            $("#cf-sug",bd).innerHTML = v ? `<div class="suggest">${r.map(p=>`<button type="button" data-pick="${p.id}"><b>${esc(p.nombre)}</b> <span class="sub">${p.dni?"DNI "+esc(p.dni):""}</span></button>`).join("")}<button type="button" data-crear="1">+ Registrar “${esc(v)}” como paciente nuevo</button></div>` : ""; };
+          setTimeout(()=>pq.focus(),50); }
+        const cb = $("#cambiar", bd); if (cb) cb.onclick = () => { pid = ""; $("#cf-pick",bd).innerHTML = picker(); wire(); };
+      };
+      wire();
+      bd.addEventListener("click", e => {
+        const pk = e.target.closest("[data-pick]"); if (pk){ pid = pk.dataset.pick; $("#cf-pick",bd).innerHTML = picker(); wire(); return; }
+        if (e.target.closest("[data-crear]")){ const nombre = $("#cf-pq",bd).value.trim(); const nid = uid("p"); save("pacientes", nid, {nombre, creado:Date.now()}); pid = nid; $("#cf-pick",bd).innerHTML = picker(); wire(); toast("Paciente creado. Completa su ficha luego."); return; }
+        const d = e.target.closest("[data-d]"); if (d){ dur = +d.dataset.d; bd.querySelectorAll("#cf-dur .chip").forEach(x=>x.classList.toggle("on", x===d)); }
+        const m = e.target.closest("[data-m]"); if (m){ $("#cf-motivo",bd).value = m.dataset.m; bd.querySelectorAll("#cf-mots .chip").forEach(x=>x.classList.toggle("on", x===m)); }
+      });
+      $("#cf-motivo",bd).oninput = e => bd.querySelectorAll("#cf-mots .chip").forEach(x=>x.classList.toggle("on", x.dataset.m===e.target.value));
+      $("#cform",bd).onsubmit = e => { e.preventDefault();
+        if (!pid){ toast("Elige un paciente."); return; }
+        const fecha = val(bd,"cf-fecha"), hora = val(bd,"cf-hora");
+        if (!fecha || !hora){ toast("Indica la fecha y la hora."); return; }
+        const choque = citasDe(fecha).find(x => x.id!==opts.id && x.estado==="programada" && minutes(hora) < minutes(x.hora)+(+x.duracion||30) && minutes(x.hora) < minutes(hora)+dur);
+        const data = {...c, pacienteId:pid, fecha, hora, duracion:dur, motivo:val(bd,"cf-motivo"), notas:val(bd,"cf-notas")};
+        if (!opts.id) data.creado = Date.now();
+        save("citas", opts.id || uid("c"), data); closeSheet();
+        toast(choque ? `Cita guardada. Ojo: se cruza con ${pacNombre(choque.pacienteId)} a las ${choque.hora}.` : (opts.id?"Cita actualizada":`Cita agendada para el ${fmtShort(fecha)}`));
+      };
+  });
+}
+
+function sheetCita(id){
+  const c = S.citas[id]; if (!c) return;
+  const [lbl, cls] = ESTADOS[c.estado]||ESTADOS.programada;
+  const p = S.pacientes[c.pacienteId];
+  openSheet("Cita", `<div class="phead" style="margin-top:0"><span class="avatar lg">${esc(initials(pacNombre(c.pacienteId)))}</span><div><h2 style="font-size:19px">${esc(pacNombre(c.pacienteId))}</h2><div class="sub">${p&&p.telefono?esc(p.telefono):""}</div></div></div>
+    <dl class="kv"><dt>Fecha</dt><dd style="text-transform:capitalize">${esc(fmtLong(c.fecha))}</dd><dt>Hora</dt><dd class="num">${esc(c.hora)} · ${esc(c.duracion||30)} min</dd><dt>Motivo</dt><dd>${esc(c.motivo||"Consulta")}</dd><dt>Estado</dt><dd><span class="pill ${cls}">${lbl}</span></dd>${c.notas?`<dt>Notas</dt><dd style="white-space:pre-wrap">${esc(c.notas)}</dd>`:""}</dl>
+    ${p&&p.alergias?`<div class="alert">Alergias: ${esc(p.alergias)}</div>`:""}
+    <div class="stack">
+      ${p?`<button class="btn primary block" data-x="perfil">Abrir perfil del paciente</button>`:""}
+      ${c.estado==="programada"?`<div class="btnrow"><button class="btn" data-x="atendida" style="color:var(--ok)">Marcar atendida</button><button class="btn" data-x="no_asistio" style="color:var(--warn)">No asistió</button></div>`:`<button class="btn block" data-x="programada">Volver a “Programada”</button>`}
+      <div style="margin-top:6px"><label>Agendar control desde esta fecha</label><div class="chips" style="margin-top:6px">${[[1,"1 mes"],[3,"3 meses"],[6,"6 meses"],[12,"1 año"]].map(([n,l])=>`<button class="chip" data-ctrl="${n}">+ ${l}</button>`).join("")}</div></div>
+      <div class="btnrow" style="margin-top:6px"><button class="btn sm" data-x="editar">Editar / reprogramar</button>${c.estado==="programada"?`<button class="btn sm" data-x="cancelada">Cancelar cita</button>`:""}<button class="btn sm danger" data-x="eliminar">Eliminar</button></div>
+    </div>`, bd => {
+      bd.addEventListener("click", e => {
+        const ctrl = e.target.closest("[data-ctrl]");
+        if (ctrl){ const n = +ctrl.dataset.ctrl; formCita({pacienteId:c.pacienteId, fecha:addMonths(c.fecha,n), hora:c.hora, duracion:c.duracion, motivo:c.motivo||"Control", titulo:`Control en ${ctrl.textContent.replace("+ ","")}`}); return; }
+        const x = e.target.closest("[data-x]"); if (!x) return; const a = x.dataset.x;
+        if (a==="perfil"){ closeSheet(); go("paciente-"+c.pacienteId); }
+        else if (["atendida","no_asistio","cancelada","programada"].includes(a)){
+          save("citas", id, {...c, estado:a});
+          if (a==="atendida"){ sheetCita(id); toast("Cita marcada como atendida. ¿Agendas su próximo control?"); } else { closeSheet(); toast("Estado actualizado"); }
+        }
+        else if (a==="editar") formCita({id});
+        else if (a==="eliminar") confirmSheet("Eliminar cita", "Esta cita se borrará del calendario. No se puede deshacer.", "Eliminar", () => { removeDoc("citas", id); toast("Cita eliminada"); });
+      });
+  });
+}
+
+function updPac(fn){ const p = JSON.parse(JSON.stringify(S.pacientes[UI.pid])); fn(p); save("pacientes", UI.pid, p); }
+function formLista(kind, item){
+  // kind: evoluciones | presupuesto | tratamientos | abonos
+  const isNew = !item; item = item || {fecha:todayStr()};
+  const T = {evoluciones:"evolución", presupuesto:"tratamiento al presupuesto", tratamientos:"tratamiento realizado", abonos:"pago"}[kind];
+  let html = `<form id="lform">`;
+  if (kind!=="presupuesto") html += `<div class="f"><label for="lf-fecha">Fecha</label><input id="lf-fecha" type="date" value="${esc(item.fecha||todayStr())}"></div>`;
+  if (kind==="evoluciones") html += `<div class="f"><label for="lf-pieza">Pieza (opcional)</label><input id="lf-pieza" inputmode="numeric" value="${esc(item.pieza||"")}" placeholder="Ej. 36"></div><div class="f"><label for="lf-texto">Evolución *</label><textarea id="lf-texto" placeholder="Procedimiento, materiales, indicaciones…">${esc(item.texto||"")}</textarea></div>`;
+  if (kind==="presupuesto"||kind==="tratamientos") html += `<div class="f"><label for="lf-desc">Tratamiento *</label><input id="lf-desc" value="${esc(item.desc||"")}" placeholder="Ej. Resina simple"></div><div class="two"><div class="f"><label for="lf-pieza">Pieza</label><input id="lf-pieza" inputmode="numeric" value="${esc(item.pieza||"")}" placeholder="Ej. 26"></div><div class="f"><label for="lf-monto">Precio (S/)</label><input id="lf-monto" type="number" inputmode="decimal" min="0" step="0.5" value="${esc(item.precio ?? item.monto ?? "")}"></div></div>`;
+  if (kind==="abonos") html += `<div class="f"><label for="lf-monto">Monto (S/) *</label><input id="lf-monto" type="number" inputmode="decimal" min="0" step="0.5" value="${esc(item.monto??"")}"></div><div class="f"><label for="lf-nota">Nota</label><input id="lf-nota" value="${esc(item.nota||"")}" placeholder="Ej. Yape, efectivo"></div>`;
+  html += `<div class="btnrow">${!isNew?`<button type="button" class="btn danger" id="lf-del">Eliminar</button>`:""}<button class="btn primary" type="submit">${isNew?"Agregar":"Guardar"}</button></div></form>`;
+  openSheet((isNew?"Agregar ":"Editar ")+T, html, bd => {
+    const first = $("#lf-texto",bd)||$("#lf-desc",bd)||$("#lf-monto",bd); setTimeout(()=>first&&first.focus(),50);
+    const del = $("#lf-del",bd); if (del) del.onclick = () => { updPac(p => p[kind] = (p[kind]||[]).filter(i=>i.id!==item.id)); closeSheet(); toast("Eliminado"); };
+    $("#lform",bd).onsubmit = e => { e.preventDefault();
+      const it = {...item, id:item.id||uid("i")};
+      if (kind!=="presupuesto") it.fecha = val(bd,"lf-fecha")||todayStr();
+      if (kind==="evoluciones"){ it.texto = val(bd,"lf-texto"); it.pieza = val(bd,"lf-pieza"); if(!it.texto){ toast("Escribe la evolución."); return; } }
+      if (kind==="presupuesto"||kind==="tratamientos"){ it.desc = val(bd,"lf-desc"); it.pieza = val(bd,"lf-pieza"); const m = parseFloat(val(bd,"lf-monto"))||0; if(kind==="presupuesto"){ it.precio=m; it.estado = it.estado||"pendiente"; } else it.monto=m; if(!it.desc){ toast("Escribe el tratamiento."); return; } }
+      if (kind==="abonos"){ it.monto = parseFloat(val(bd,"lf-monto"))||0; it.nota = val(bd,"lf-nota"); if(!it.monto){ toast("Indica el monto."); return; } }
+      updPac(p => { const arr = p[kind]||[]; const i = arr.findIndex(x=>x.id===it.id); if (i>=0) arr[i]=it; else arr.push(it); p[kind]=arr; });
+      closeSheet(); toast(isNew?"Agregado":"Guardado");
+    };
+  });
+}
+
+/* ---------- eventos ---------- */
+document.addEventListener("input", e => {
+  if (e.target.id === "q"){ UI.q = e.target.value; render(); }
+  if (e.target.id === "pq"){ UI.pq = e.target.value; render(); }
+});
+document.addEventListener("click", e => {
+  if (sheetEl && sheetEl.contains(e.target)) return;
+  const t = e.target;
+  const open = t.closest("[data-open]"); if (open){ UI.q = ""; go("paciente-"+open.dataset.open); return; }
+  const ci = t.closest("[data-cita]"); if (ci){ sheetCita(ci.dataset.cita); return; }
+  const dia = t.closest("[data-dia]"); if (dia){ const n = +dia.dataset.dia; UI.dia = n===0 ? todayStr() : addDays(UI.dia, n); render(); return; }
+  const mes = t.closest("[data-mes]"); if (mes){ const n = +mes.dataset.mes; if (n===0){ UI.mes = todayStr().slice(0,8)+"01"; UI.calSel = todayStr(); } else { UI.mes = addMonths(UI.mes, n); UI.calSel = UI.mes; } render(); return; }
+  const cal = t.closest("[data-cal]"); if (cal){ UI.calSel = cal.dataset.cal; if (!UI.calSel.startsWith(UI.mes.slice(0,7))) UI.mes = UI.calSel.slice(0,8)+"01"; render(); return; }
+  const tab = t.closest("[data-tab]"); if (tab){ UI.tab = tab.dataset.tab; render(); return; }
+  const tool = t.closest("[data-tool]"); if (tool){ UI.tool = tool.dataset.tool; const o=$("#odo"); const sl=o?o.scrollLeft:0; render(); const o2=$("#odo"); if(o2){o2.dataset.sc=1;o2.scrollLeft=sl;} return; }
+  const tooth = t.closest("[data-t]");
+  if (tooth && UI.route==="paciente"){
+    const n = tooth.dataset.t; const s = t.closest("[data-s]")?.dataset.s;
+    const tl = TOOLS.find(x=>x[0]===UI.tool);
+    if (tl[2]==="s" && !s) return;
+    const o = $("#odo"); const sl = o ? o.scrollLeft : 0;
+    updPac(p => { p.odontograma = p.odontograma||{}; const td = p.odontograma[n] = p.odontograma[n]||{caras:{},estado:{}}; td.caras=td.caras||{}; td.estado=td.estado||{};
+      if (UI.tool==="borrar"){ if (s && td.caras[s]) delete td.caras[s]; else { td.caras={}; td.estado={}; } }
+      else if (tl[2]==="s"){ if (!s) return; td.caras[s] = td.caras[s]===UI.tool ? undefined : UI.tool; if(!td.caras[s]) delete td.caras[s]; }
+      else { td.estado[UI.tool] = !td.estado[UI.tool]; if(!td.estado[UI.tool]) delete td.estado[UI.tool]; }
+      if (!Object.keys(td.caras).length && !Object.keys(td.estado).length) delete p.odontograma[n];
+    });
+    const o2 = $("#odo"); if (o2){ o2.dataset.sc = 1; o2.scrollLeft = sl; }
+    return;
+  }
+  const fn = (sel, f) => { const el = t.closest(sel); if (el){ f(el); return true; } return false; };
+  if (fn("[data-edit-evo]", el => formLista("evoluciones", S.pacientes[UI.pid].evoluciones.find(i=>i.id===el.dataset.editEvo)))) return;
+  if (fn("[data-edit-pres]", el => formLista("presupuesto", S.pacientes[UI.pid].presupuesto.find(i=>i.id===el.dataset.editPres)))) return;
+  if (fn("[data-edit-trat]", el => formLista("tratamientos", S.pacientes[UI.pid].tratamientos.find(i=>i.id===el.dataset.editTrat)))) return;
+  if (fn("[data-del-abono]", el => updPac(p => p.abonos = (p.abonos||[]).filter(i=>i.id!==el.dataset.delAbono)))) return;
+  if (fn("[data-hecho]", el => { updPac(p => { const it = p.presupuesto.find(i=>i.id===el.dataset.hecho); it.estado="realizado"; (p.tratamientos ||= []).push({id:uid("i"), fecha:todayStr(), desc:it.desc, pieza:it.pieza, monto:it.precio, desdePres:it.id}); }); toast("Pasado a tratamientos realizados"); })) return;
+  const act = t.closest("[data-act]"); if (!act) return;
+  const a = act.dataset.act;
+  if (a==="back"){ if (history.length > 1) history.back(); else go("pacientes"); }
+  else if (a==="nuevoPac") formPaciente(null, UI.q);
+  else if (a==="editPac") formPaciente(UI.pid);
+  else if (a==="delPac") confirmSheet("Eliminar paciente", `Se borrará la ficha de ${pacNombre(UI.pid)} y todas sus citas. No se puede deshacer.`, "Eliminar", () => { const pid = UI.pid; citasPaciente(pid).forEach(c=>removeDoc("citas", c.id)); removeDoc("pacientes", pid); go("pacientes"); toast("Paciente eliminado"); });
+  else if (a==="citaPac") formCita({pacienteId:UI.pid});
+  else if (a==="citaEnDia") formCita({fecha:UI.calSel});
+  else if (a==="addEvo") formLista("evoluciones");
+  else if (a==="addPres") formLista("presupuesto");
+  else if (a==="addTrat") formLista("tratamientos");
+  else if (a==="addAbono") formLista("abonos");
+  else if (a==="limpiarOdo") confirmSheet("Limpiar odontograma", "Se borrarán todas las marcas de este odontograma.", "Limpiar", () => updPac(p => p.odontograma = {}));
+  else if (a==="exportar") exportar();
+  else if (a==="importar") $("#importFile").click();
+  else if (a==="demo") cargarDemo();
+  else if (a==="quitarDemo") confirmSheet("Quitar datos de ejemplo", "Se borrarán los pacientes y citas de ejemplo. Tus registros reales se quedan.", "Quitar", () => { Object.entries(S.citas).forEach(([id,c])=>{ if(c.demo) removeDoc("citas",id); }); Object.entries(S.pacientes).forEach(([id,p])=>{ if(p.demo) removeDoc("pacientes",id); }); toast("Datos de ejemplo quitados"); });
+});
+$("#fab").onclick = () => formCita({pacienteId: UI.route==="paciente" ? UI.pid : "", fecha: UI.route==="calendario" ? UI.calSel : (UI.route==="hoy" ? UI.dia : todayStr())});
+$("#navNuevoPac").onclick = () => formPaciente(null);
+
+/* ---------- copia de seguridad (modo local) ---------- */
+function exportar(){
+  const data = JSON.stringify({app:"OdontoVale", version:1, fecha:new Date().toISOString(), pacientes:S.pacientes, citas:S.citas}, null, 1);
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([data], {type:"application/json"}));
+  a.download = `odontovale-copia-${todayStr()}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+  try { localStorage.setItem(LSKEY+"-copia", todayStr()); } catch(e){}
+  S.ultimaCopia = fmtShort(todayStr()); render(); toast("Copia descargada");
+}
+document.addEventListener("change", async e => {
+  if (e.target.id !== "importFile" || !e.target.files[0]) return;
+  try {
+    const d = JSON.parse(await e.target.files[0].text());
+    if (!d || typeof d.pacientes !== "object" || typeof d.citas !== "object") throw 0;
+    const np = Object.keys(d.pacientes).length, nc = Object.keys(d.citas).length;
+    confirmSheet("Restaurar copia", `La copia tiene ${np} pacientes y ${nc} citas. Reemplazará los datos actuales de este equipo.`, "Restaurar", () => {
+      S.pacientes = d.pacientes; S.citas = d.citas; localSave(); render(); toast("Copia restaurada");
+    });
+  } catch(err){ toast("Ese archivo no es una copia válida de OdontoVale."); }
+  e.target.value = "";
+});
+
+/* ---------- datos de ejemplo (solo a pedido) ---------- */
+async function cargarDemo(){
+  const h = todayStr();
+  const P = [
+    {id:"pdemo1", nombre:"María Fernanda Torres Quispe", dni:"72345118", nacimiento:"1994-03-12", telefono:"987 654 321", correo:"mafe.torres@correo.pe", direccion:"Av. Arequipa 1450, Lince", alergias:"Penicilina", antecedentes:"Gastritis. Sin medicación actual.", emergencia:"Jorge Torres · 945 112 300",
+      odontograma:{"16":{caras:{O:"caries",M:"caries"},estado:{}},"26":{caras:{O:"obt"},estado:{}},"36":{caras:{},estado:{endo:true,corona:true}},"48":{caras:{},estado:{ext:true}}},
+      evoluciones:[{id:"e1",fecha:addMonths(h,-6),texto:"Profilaxis y destartraje. Se indica control en 6 meses.",pieza:""},{id:"e2",fecha:addDays(h,-14),texto:"Evaluación. Caries O-M en 16. Se presupuesta resina.",pieza:"16"}],
+      presupuesto:[{id:"b1",desc:"Resina compuesta",pieza:"16",precio:150,estado:"pendiente"},{id:"b2",desc:"Exodoncia tercera molar",pieza:"48",precio:280,estado:"pendiente"},{id:"b3",desc:"Profilaxis",pieza:"",precio:80,estado:"realizado"}],
+      abonos:[{id:"a1",fecha:addDays(h,-14),monto:180,nota:"Yape"}],
+      tratamientos:[{id:"t1",fecha:addMonths(h,-6),desc:"Profilaxis",pieza:"",monto:80}]},
+    {id:"pdemo2", nombre:"Luis Alberto Ramírez Soto", dni:"45120987", nacimiento:"1981-08-30", telefono:"956 220 114", alergias:"", antecedentes:"Hipertensión controlada (losartán).", emergencia:"Rosa Soto · 999 450 210",
+      odontograma:{"11":{caras:{},estado:{corona:true}},"21":{caras:{M:"caries"},estado:{}}}, evoluciones:[], presupuesto:[{id:"b4",desc:"Corona de porcelana",pieza:"21",precio:950,estado:"pendiente"}], abonos:[], tratamientos:[]},
+    {id:"pdemo3", nombre:"Camila Rojas Huamán", dni:"76881203", nacimiento:"2008-01-19", telefono:"912 300 456", antecedentes:"Ortodoncia fija desde marzo.", emergencia:"Patricia Huamán · 934 770 120"},
+    {id:"pdemo4", nombre:"Jorge Mendoza Paredes", dni:"09876543", nacimiento:"1967-11-02", telefono:"981 004 552", alergias:"Látex", antecedentes:"Diabetes tipo 2."},
+    {id:"pdemo5", nombre:"Andrea Salazar Vega", dni:"70011234", nacimiento:"1999-06-25", telefono:"923 818 090"},
+  ];
+  const C = [
+    ["pdemo3",h,"09:00",30,"Control de ortodoncia"],["pdemo1",h,"10:30",45,"Curación"],["pdemo4",h,"12:00",60,"Evaluación"],["pdemo5",h,"16:00",30,"Limpieza"],
+    ["pdemo2",addDays(h,1),"11:00",60,"Prótesis"],["pdemo4",addDays(h,3),"09:30",45,"Extracción"],["pdemo1",addDays(h,9),"17:00",60,"Extracción"],
+    ["pdemo5",addDays(h,-5),"15:00",30,"Evaluación","atendida"],["pdemo2",addDays(h,-12),"10:00",45,"Evaluación","atendida"],["pdemo1",addDays(h,-14),"18:00",30,"Evaluación","atendida"],
+    ["pdemo1",addMonths(h,-6),"09:00",45,"Limpieza","atendida"],["pdemo1",addMonths(h,6),"09:00",45,"Limpieza"],["pdemo3",addMonths(h,1),"09:00",30,"Control de ortodoncia"],["pdemo4",addDays(h,-20),"11:00",30,"Evaluación","no_asistio"],
+  ];
+  for (const p of P){ const {id, ...d} = p; d.demo = true; d.creado = Date.now(); save("pacientes", id, d); }
+  C.forEach(([pid,fecha,hora,duracion,motivo,estado],i) => save("citas", "cdemo"+i, {pacienteId:pid, fecha, hora, duracion, motivo, estado:estado||"programada", notas:"", demo:true, creado:Date.now()}));
+  toast("Datos de ejemplo cargados");
+}
+
+readHash();
+boot();
+</script>
+</body>
+</html>
