@@ -82,7 +82,9 @@ html{background:#F8F3EC}
   color-scheme: light;
 }
 *{box-sizing:border-box}
-html,body{height:100%;margin:0}
+html{min-height:100%;margin:0}
+html.listo{background:#FFFFFF}
+body{min-height:100%;margin:0}
 body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
@@ -90,7 +92,7 @@ button{cursor:pointer}
 h1,h2,h3{font-family:var(--display);font-weight:600;margin:0;text-wrap:balance;letter-spacing:-.01em}
 .num{font-variant-numeric:tabular-nums}
 
-#app{max-width:520px;margin:0 auto;min-height:100%;padding:calc(env(safe-area-inset-top) + 18px) 18px calc(env(safe-area-inset-bottom) + 96px);}
+#app{max-width:520px;margin:0 auto;min-height:100%;padding:calc(env(safe-area-inset-top) + 18px) 18px calc(env(safe-area-inset-bottom) + 84px);}
 .top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:16px}
 .eyebrow{font-size:13px;color:var(--muted);font-weight:600}
 .top h1{font-size:26px;line-height:1.15;margin-top:2px}
@@ -155,7 +157,7 @@ h1,h2,h3{font-family:var(--display);font-weight:600;margin:0;text-wrap:balance;l
 .link{background:none;border:0;color:var(--accent);font-weight:700;padding:0}
 
 /* barra inferior */
-.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:30;background:rgba(255,255,255,.94);backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:8px 10px calc(env(safe-area-inset-bottom) + 8px)}
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:30;background:#FFFFFF;border-top:1px solid var(--line);padding:7px 10px max(6px, calc(env(safe-area-inset-bottom) - 16px))}
 .tabbar .in{max-width:520px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr 64px 1fr 1fr;align-items:center}
 .tabbar a,.tabbar button.t{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;font-weight:700;color:var(--muted);text-decoration:none;background:none;border:0;padding:4px 0}
 .tabbar svg{width:23px;height:23px;stroke:currentColor}
@@ -314,7 +316,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);
 </div>
 <script>
 (function(){var s=document.getElementById("splash");var reduce=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
-setTimeout(function(){s.classList.add("out");var m=document.querySelector('meta[name="theme-color"]');if(m)m.content="#FFFFFF";setTimeout(function(){s.remove();},500);},reduce?600:2700);})();
+setTimeout(function(){s.classList.add("out");document.documentElement.classList.add("listo");var m=document.querySelector('meta[name="theme-color"]');if(m)m.content="#FFFFFF";setTimeout(function(){s.remove();},500);},reduce?600:2700);})();
 </script>
 <div id="app"><div class="loading">Cargando tu consultorio…</div></div>
 
@@ -330,7 +332,7 @@ setTimeout(function(){s.classList.add("out");var m=document.querySelector('meta[
 
 <script>
 /* Actualización automática: al abrir o volver a la app, si hay una versión nueva se recarga sola */
-const APP_VERSION = "2026.11.16-0025";
+const APP_VERSION = "2026.11.16-0028";
 let recargaPendiente = false;
 async function buscarActualizacion(){
   if (!/^https?:$/.test(location.protocol) || (window.claude && typeof window.claude.use === "function")) return;
