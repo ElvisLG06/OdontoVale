@@ -286,6 +286,7 @@ h1,h2,h3{font-family:var(--display);font-weight:600;margin:0;text-wrap:balance;l
 @media (prefers-reduced-motion:reduce){.scrim,.sheet{animation:none}}
 
 form .f{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+form .f.resalta input{border-color:var(--accent);background:var(--accent-soft)}
 form .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 label{font-size:12px;font-weight:700;color:var(--muted)}
 input[type=text],input[type=tel],input[type=email],input[type=date],input[type=time],input[type=number],input:not([type]),select,textarea{width:100%;min-height:46px;border:1px solid var(--line);border-radius:12px;background:var(--sand);padding:10px 12px;font-size:16px}
@@ -334,7 +335,7 @@ setTimeout(function(){s.classList.add("out");document.documentElement.classList.
 
 <script>
 /* Actualización automática: al abrir o volver a la app, si hay una versión nueva se recarga sola */
-const APP_VERSION = "2026.11.16-1145";
+const APP_VERSION = "2026.11.16-1700";
 let recargaPendiente = false;
 async function buscarActualizacion(){
   if (!/^https?:$/.test(location.protocol) || (window.claude && typeof window.claude.use === "function")) return;
@@ -384,6 +385,7 @@ const ICON = {
   chev:'<svg class="chev" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>',
   edit:'<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>',
 };
+const TIPOS_PAGO = ["Efectivo","Yape","Plin","Transferencia"];
 const MOTIVOS = ["Evaluación","Limpieza","Curación","Endodoncia","Extracción","Control de ortodoncia","Blanqueamiento","Prótesis","Control"];
 const ESTADOS = {programada:["Programada",""], atendida:["Atendida","ok"], no_asistio:["No asistió","warn"], cancelada:["Cancelada","muted"]};
 
@@ -777,7 +779,7 @@ function tPres(p){
   <div class="sectionhead"><h3>Tratamientos presupuestados</h3><button class="btn primary sm" data-act="addPres">+ Agregar</button></div>
   <div class="list">${it.length?it.map(i=>`<div class="item"><div class="grow"><div class="t">${esc(i.desc)}</div><div class="d">${i.pieza?"Pieza "+esc(i.pieza)+" · ":""}${i.estado==="realizado"?`<span style="color:var(--ok);font-weight:700">Realizado</span>`:"Pendiente"}</div></div><div style="text-align:right"><div class="amt num">${money(i.precio)}</div>${i.estado!=="realizado"?`<button class="mini" style="margin-top:4px" data-hecho="${i.id}">Marcar hecho</button>`:`<button class="mini" style="margin-top:4px" data-edit-pres="${i.id}">Editar</button>`}</div></div>`).join(""):`<div class="emptybox"><b>Sin presupuesto</b>Agrega los tratamientos y su precio.</div>`}</div>
   <div class="sectionhead" style="margin-top:18px"><h3>Pagos</h3><button class="btn soft sm" data-act="addAbono">+ Registrar pago</button></div>
-  <div class="list">${ab.length?ab.map(a=>`<div class="item"><div class="grow"><div class="t num">${money(a.monto)}</div><div class="d">${fmtShort(a.fecha)}${a.nota?" · "+esc(a.nota):""}</div></div><button class="mini" data-del-abono="${a.id}">Quitar</button></div>`).join(""):`<div class="emptybox">Aún no hay pagos.</div>`}</div>`;
+  <div class="list">${ab.length?ab.map(a=>`<div class="item"><div class="grow"><div class="t num">${money(a.monto)}</div><div class="d">${fmtShort(a.fecha)}${a.tipo?" · "+esc(a.tipo):""}${a.nota?" · "+esc(a.nota):""}</div>${a.tratamiento?`<div class="d">${esc(a.tratamiento)}</div>`:""}</div><button class="mini" data-edit-abono="${a.id}">Editar</button></div>`).join(""):`<div class="emptybox">Aún no hay pagos.</div>`}</div>`;
 }
 function tTrat(p){
   const tr = [...(p.tratamientos||[])].sort((a,b)=>b.fecha.localeCompare(a.fecha));
@@ -866,6 +868,7 @@ function formCita(opts={}){
         const cb = $("#cambiar", bd); if (cb) cb.onclick = () => { pid = ""; $("#cf-pick",bd).innerHTML = picker(); wire(); };
       };
       wire();
+      if (opts.elegirFecha){ const fe = $("#cf-fecha", bd); fe.closest(".f").classList.add("resalta"); setTimeout(()=>{ fe.focus(); try{ fe.showPicker && fe.showPicker(); }catch(e){} }, 120); }
       bd.addEventListener("click", e => {
         const pk = e.target.closest("[data-pick]"); if (pk){ pid = pk.dataset.pick; $("#cf-pick",bd).innerHTML = picker(); wire(); return; }
         if (e.target.closest("[data-crear]")){ const nombre = $("#cf-pq",bd).value.trim(); const nid = uid("p"); save("pacientes", nid, {nombre, creado:Date.now()}); pid = nid; $("#cf-pick",bd).innerHTML = picker(); wire(); toast("Paciente creado. Completa su ficha luego."); return; }
@@ -896,11 +899,12 @@ function sheetCita(id){
     <div class="stack">
       ${p?`<button class="btn primary block" data-x="perfil">Abrir perfil del paciente</button>`:""}
       ${c.estado==="programada"?`<div class="btnrow"><button class="btn" data-x="atendida" style="color:var(--ok)">Marcar atendida</button><button class="btn" data-x="no_asistio" style="color:var(--warn)">No asistió</button></div>`:`<button class="btn block" data-x="programada">Volver a “Programada”</button>`}
-      <div style="margin-top:6px"><label>Agendar control desde esta fecha</label><div class="chips" style="margin-top:6px">${[[1,"1 mes"],[3,"3 meses"],[6,"6 meses"],[12,"1 año"]].map(([n,l])=>`<button class="chip" data-ctrl="${n}">+ ${l}</button>`).join("")}</div></div>
+      <div style="margin-top:6px"><label>Agendar control desde esta fecha</label><div class="chips" style="margin-top:6px">${[[1,"1 mes"],[3,"3 meses"],[6,"6 meses"],[12,"1 año"]].map(([n,l])=>`<button class="chip" data-ctrl="${n}">+ ${l}</button>`).join("")}<button class="chip" data-ctrl="otra">Otra fecha…</button></div></div>
       <div class="btnrow" style="margin-top:6px"><button class="btn sm" data-x="editar">Editar / reprogramar</button>${c.estado==="programada"?`<button class="btn sm" data-x="cancelada">Cancelar cita</button>`:""}<button class="btn sm danger" data-x="eliminar">Eliminar</button></div>
     </div>`, bd => {
       bd.addEventListener("click", e => {
         const ctrl = e.target.closest("[data-ctrl]");
+        if (ctrl && ctrl.dataset.ctrl==="otra"){ formCita({pacienteId:c.pacienteId, fecha:addDays(c.fecha > todayStr() ? c.fecha : todayStr(), 7), hora:c.hora, duracion:c.duracion, motivo:c.motivo||"Control", titulo:"Agendar control", elegirFecha:true}); return; }
         if (ctrl){ const n = +ctrl.dataset.ctrl; formCita({pacienteId:c.pacienteId, fecha:addMonths(c.fecha,n), hora:c.hora, duracion:c.duracion, motivo:c.motivo||"Control", titulo:`Control en ${ctrl.textContent.replace("+ ","")}`}); return; }
         const x = e.target.closest("[data-x]"); if (!x) return; const a = x.dataset.x;
         if (a==="perfil"){ closeSheet(); go("paciente-"+c.pacienteId); }
@@ -923,9 +927,17 @@ function formLista(kind, item){
   if (kind!=="presupuesto") html += `<div class="f"><label for="lf-fecha">Fecha</label><input id="lf-fecha" type="date" value="${esc(item.fecha||todayStr())}"></div>`;
   if (kind==="evoluciones") html += `<div class="f"><label for="lf-pieza">Pieza (opcional)</label><input id="lf-pieza" inputmode="numeric" value="${esc(item.pieza||"")}" placeholder="Ej. 36"></div><div class="f"><label for="lf-texto">Evolución *</label><textarea id="lf-texto" placeholder="Procedimiento, materiales, indicaciones…">${esc(item.texto||"")}</textarea></div>`;
   if (kind==="presupuesto"||kind==="tratamientos") html += `<div class="f"><label for="lf-desc">Tratamiento *</label><input id="lf-desc" value="${esc(item.desc||"")}" placeholder="Ej. Resina simple"></div><div class="two"><div class="f"><label for="lf-pieza">Pieza</label><input id="lf-pieza" inputmode="numeric" value="${esc(item.pieza||"")}" placeholder="Ej. 26"></div><div class="f"><label for="lf-monto">Precio (S/)</label><input id="lf-monto" type="number" inputmode="decimal" min="0" step="0.5" value="${esc(item.precio ?? item.monto ?? "")}"></div></div>`;
-  if (kind==="abonos") html += `<div class="f"><label for="lf-monto">Monto (S/) *</label><input id="lf-monto" type="number" inputmode="decimal" min="0" step="0.5" value="${esc(item.monto??"")}"></div><div class="f"><label for="lf-nota">Nota</label><input id="lf-nota" value="${esc(item.nota||"")}" placeholder="Ej. Yape, efectivo"></div>`;
-  html += `<div class="btnrow">${!isNew?`<button type="button" class="btn danger" id="lf-del">Eliminar</button>`:""}<button class="btn primary" type="submit">${isNew?"Agregar":"Guardar"}</button></div></form>`;
-  openSheet((isNew?"Agregar ":"Editar ")+T, html, bd => {
+  if (kind==="abonos"){
+    const pres = (S.pacientes[UI.pid].presupuesto||[]);
+    const sel = item.presId || (item.tratamiento ? "" : (pres.find(i=>i.estado!=="realizado")||{}).id || "");
+    html += `<div class="f"><label for="lf-monto">Monto (S/) *</label><input id="lf-monto" type="number" inputmode="decimal" min="0" step="0.5" value="${esc(item.monto??"")}"></div>
+    <div class="f"><label for="lf-trat">Tratamiento</label><select id="lf-trat"><option value="">Pago general (sin tratamiento)</option>${pres.map(i=>`<option value="${i.id}" ${i.id===sel?"selected":""}>${esc(i.desc)}${i.pieza?" · pieza "+esc(i.pieza):""} · ${money(i.precio)}</option>`).join("")}</select>${pres.length?"":`<div class="sub" style="font-size:12px">Agrega tratamientos al presupuesto para elegirlos aquí.</div>`}</div>
+    <div class="f"><label>Tipo de pago *</label><div class="chips" id="lf-tipo">${TIPOS_PAGO.map(t=>`<button type="button" class="chip ${item.tipo===t?"on":""}" data-tp="${t}">${t}</button>`).join("")}</div></div>`;
+  }
+  html += `<div class="btnrow">${!isNew?`<button type="button" class="btn danger" id="lf-del">Eliminar</button>`:""}<button class="btn primary" type="submit">${isNew?(kind==="abonos"?"Registrar pago":"Agregar"):"Guardar"}</button></div></form>`;
+  openSheet(kind==="abonos" ? (isNew?"Registrar pago":"Editar pago") : (isNew?"Agregar ":"Editar ")+T, html, bd => {
+    let tipo = item.tipo || "";
+    bd.addEventListener("click", e => { const b = e.target.closest("[data-tp]"); if (b){ tipo = b.dataset.tp; bd.querySelectorAll("[data-tp]").forEach(x=>x.classList.toggle("on", x===b)); } });
     const first = $("#lf-texto",bd)||$("#lf-desc",bd)||$("#lf-monto",bd); setTimeout(()=>first&&first.focus(),50);
     const del = $("#lf-del",bd); if (del) del.onclick = () => { updPac(p => p[kind] = (p[kind]||[]).filter(i=>i.id!==item.id)); closeSheet(); toast("Eliminado"); };
     $("#lform",bd).onsubmit = e => { e.preventDefault();
@@ -933,7 +945,9 @@ function formLista(kind, item){
       if (kind!=="presupuesto") it.fecha = val(bd,"lf-fecha")||todayStr();
       if (kind==="evoluciones"){ it.texto = val(bd,"lf-texto"); it.pieza = val(bd,"lf-pieza"); if(!it.texto){ toast("Escribe la evolución."); return; } }
       if (kind==="presupuesto"||kind==="tratamientos"){ it.desc = val(bd,"lf-desc"); it.pieza = val(bd,"lf-pieza"); const m = parseFloat(val(bd,"lf-monto"))||0; if(kind==="presupuesto"){ it.precio=m; it.estado = it.estado||"pendiente"; } else it.monto=m; if(!it.desc){ toast("Escribe el tratamiento."); return; } }
-      if (kind==="abonos"){ it.monto = parseFloat(val(bd,"lf-monto"))||0; it.nota = val(bd,"lf-nota"); if(!it.monto){ toast("Indica el monto."); return; } }
+      if (kind==="abonos"){ it.monto = parseFloat(val(bd,"lf-monto"))||0; if(!it.monto){ toast("Indica el monto."); return; } if(!tipo){ toast("Elige el tipo de pago."); return; }
+        it.tipo = tipo; delete it.nota; const pid = val(bd,"lf-trat"); const pi = (S.pacientes[UI.pid].presupuesto||[]).find(i=>i.id===pid);
+        it.presId = pi ? pi.id : ""; it.tratamiento = pi ? pi.desc + (pi.pieza ? " · pieza "+pi.pieza : "") : ""; }
       updPac(p => { const arr = p[kind]||[]; const i = arr.findIndex(x=>x.id===it.id); if (i>=0) arr[i]=it; else arr.push(it); p[kind]=arr; });
       closeSheet(); toast(isNew?"Agregado":"Guardado");
     };
@@ -960,7 +974,7 @@ document.addEventListener("click", e => {
   if (fn("[data-edit-evo]", el => formLista("evoluciones", S.pacientes[UI.pid].evoluciones.find(i=>i.id===el.dataset.editEvo)))) return;
   if (fn("[data-edit-pres]", el => formLista("presupuesto", S.pacientes[UI.pid].presupuesto.find(i=>i.id===el.dataset.editPres)))) return;
   if (fn("[data-edit-trat]", el => formLista("tratamientos", S.pacientes[UI.pid].tratamientos.find(i=>i.id===el.dataset.editTrat)))) return;
-  if (fn("[data-del-abono]", el => updPac(p => p.abonos = (p.abonos||[]).filter(i=>i.id!==el.dataset.delAbono)))) return;
+  if (fn("[data-edit-abono]", el => formLista("abonos", S.pacientes[UI.pid].abonos.find(i=>i.id===el.dataset.editAbono)))) return;
   if (fn("[data-hecho]", el => { updPac(p => { const it = p.presupuesto.find(i=>i.id===el.dataset.hecho); it.estado="realizado"; (p.tratamientos ||= []).push({id:uid("i"), fecha:todayStr(), desc:it.desc, pieza:it.pieza, monto:it.precio, desdePres:it.id}); }); toast("Pasado a tratamientos realizados"); })) return;
   const act = t.closest("[data-act]"); if (!act) return;
   const a = act.dataset.act;
@@ -1017,7 +1031,7 @@ async function cargarDemo(){
       odoInicial:{fijado:true, fecha:addMonths(h,-2), odontograma:{"26":{caras:{O:"caries"},estado:{}},"48":{caras:{},estado:{ext:true}},"36":{caras:{},estado:{endo:true}}}},
       evoluciones:[{id:"e1",fecha:addMonths(h,-6),texto:"Profilaxis y destartraje. Se indica control en 6 meses.",pieza:""},{id:"e2",fecha:addDays(h,-14),texto:"Evaluación. Caries O-M en 16. Se presupuesta resina.",pieza:"16"}],
       presupuesto:[{id:"b1",desc:"Resina compuesta",pieza:"16",precio:150,estado:"pendiente"},{id:"b2",desc:"Exodoncia tercera molar",pieza:"48",precio:280,estado:"pendiente"},{id:"b3",desc:"Profilaxis",pieza:"",precio:80,estado:"realizado"}],
-      abonos:[{id:"a1",fecha:addDays(h,-14),monto:180,nota:"Yape"}],
+      abonos:[{id:"a1",fecha:addDays(h,-14),monto:180,tipo:"Yape",presId:"b1",tratamiento:"Resina compuesta · pieza 16"}],
       tratamientos:[{id:"t1",fecha:addMonths(h,-6),desc:"Profilaxis",pieza:"",monto:80}]},
     {id:"pdemo2", nombre:"Luis Alberto Ramírez Soto", dni:"45120987", nacimiento:"1981-08-30", telefono:"956 220 114", alergias:"", antecedentes:"Hipertensión controlada (losartán).", emergencia:"Rosa Soto · 999 450 210",
       odontograma:{"11":{caras:{},estado:{corona:true}},"21":{caras:{M:"caries"},estado:{}}}, evoluciones:[], presupuesto:[{id:"b4",desc:"Corona de porcelana",pieza:"21",precio:950,estado:"pendiente"}], abonos:[], tratamientos:[]},
