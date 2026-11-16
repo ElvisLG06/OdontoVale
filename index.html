@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>OdontoVale · Consultorio Dra. Valeria</title>
 <meta name="theme-color" content="#F8F3EC">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -27,6 +27,17 @@
 <link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="icons/splash-1242x2208.png">
 <link rel="apple-touch-startup-image" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="icons/splash-640x1136.png">
 <style>
+/* Sin zoom por doble toque ni pellizco */
+html{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+/* Solo vertical: en celular horizontal se pide girar */
+#girar{display:none}
+@media (orientation:landscape) and (max-height:520px){
+  #girar{display:flex;position:fixed;inset:0;z-index:200;background:#F8F3EC;flex-direction:column;align-items:center;justify-content:center;gap:14px;font-family:"Manrope",system-ui,sans-serif;color:#33291F;text-align:center;padding:20px}
+  #girar svg{width:56px;height:56px}
+  #girar b{font-family:"Outfit","Manrope",sans-serif;font-size:20px;font-weight:600}
+  #girar span{font-size:14px;color:#86776A}
+  body{overflow:hidden}
+}
 /* Pantalla de inicio: va primero para que nunca se vea un fondo negro */
 html{background:#F8F3EC}
 #splash{position:fixed;inset:0;z-index:100;background:#F8F3EC;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;transition:opacity .45s ease}
@@ -295,6 +306,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);
 </style>
 </head>
 <body>
+<div id="girar" aria-live="polite"><svg viewBox="0 0 24 24" fill="none" stroke="#8C6A4F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/></svg><b>Gira tu celular</b><span>OdontoVale se usa en vertical.</span></div>
 <div id="splash" aria-hidden="true">
   <div class="tile"><svg class="t" viewBox="0 0 64 64"><g transform="translate(0 -2.5)"><path class="stroke" d="M32 20C29 20 27 18 23 18C18 18 15 22 15 28C15 36 19 40 21 48C22 52 26 52 27 48L29 41C30 38 34 38 35 41L37 48C38 52 42 52 43 48C45 40 49 36 49 28C49 22 46 18 41 18C37 18 35 20 32 20Z" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><path class="fill" d="M32 20C29 20 27 18 23 18C18 18 15 22 15 28C15 36 19 40 21 48C22 52 26 52 27 48L29 41C30 38 34 38 35 41L37 48C38 52 42 52 43 48C45 40 49 36 49 28C49 22 46 18 41 18C37 18 35 20 32 20Z" fill="#fff"/></g></svg><span class="shine"></span><svg class="spark" viewBox="0 0 12 12"><path d="M6 0L7 5 12 6 7 7 6 12 5 7 0 6 5 5Z" fill="#fff"/></svg></div>
   <div class="nm"><span style="animation-delay:1.45s">O</span><span style="animation-delay:1.50s">d</span><span style="animation-delay:1.55s">o</span><span style="animation-delay:1.60s">n</span><span style="animation-delay:1.65s">t</span><span style="animation-delay:1.70s">o</span><span style="animation-delay:1.75s">V</span><span style="animation-delay:1.80s">a</span><span style="animation-delay:1.85s">l</span><span style="animation-delay:1.90s">e</span></div>
@@ -318,7 +330,7 @@ setTimeout(function(){s.classList.add("out");var m=document.querySelector('meta[
 
 <script>
 /* Actualización automática: al abrir o volver a la app, si hay una versión nueva se recarga sola */
-const APP_VERSION = "2026.11.16-0020";
+const APP_VERSION = "2026.11.16-0025";
 let recargaPendiente = false;
 async function buscarActualizacion(){
   if (!/^https?:$/.test(location.protocol) || (window.claude && typeof window.claude.use === "function")) return;
@@ -334,6 +346,11 @@ async function buscarActualizacion(){
   } catch(e){}
 }
 buscarActualizacion();
+["gesturestart","gesturechange","gestureend"].forEach(ev => document.addEventListener(ev, e => e.preventDefault(), {passive:false}));
+document.addEventListener("touchmove", e => { if (e.touches && e.touches.length > 1) e.preventDefault(); }, {passive:false});
+let ultimoToque = 0;
+document.addEventListener("touchend", e => { const ahora = Date.now(); if (ahora - ultimoToque < 300 && !e.target.closest("input,textarea,select")) e.preventDefault(); ultimoToque = ahora; }, {passive:false});
+try { screen.orientation && screen.orientation.lock && screen.orientation.lock("portrait").catch(()=>{}); } catch(e){}
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") buscarActualizacion(); });
 
 /* ---------- utilidades ---------- */
