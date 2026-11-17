@@ -311,6 +311,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);
 .kv dt{color:var(--muted);font-size:13px;font-weight:600}
 .kv dd{margin:0;font-weight:600}
 .stack{display:flex;flex-direction:column;gap:8px}
+.gcaviso{display:block;width:100%;text-align:left;border:0;font:inherit;color:var(--accent);background:var(--accent-soft)}
 .notice{font-size:12px;color:var(--muted);background:var(--sand);border-radius:10px;padding:8px 12px;margin-bottom:14px}
 .toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 92px);transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:12px;font-size:14px;font-weight:600;z-index:60;max-width:90%;text-align:center}
 .loading{padding:60px 0;text-align:center;color:var(--muted)}
@@ -343,7 +344,7 @@ setTimeout(function(){s.classList.add("out");document.documentElement.classList.
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
 <script>
 /* Actualización automática: al abrir o volver a la app, si hay una versión nueva se recarga sola */
-const APP_VERSION = "2026.11.16-1749";
+const APP_VERSION = "2026.11.17-1328";
 let recargaPendiente = false;
 async function buscarActualizacion(){
   if (!/^https?:$/.test(location.protocol) || (window.claude && typeof window.claude.use === "function")) return;
@@ -433,11 +434,13 @@ function save(kind, id, data){
   data.actualizado = Date.now();
   S[kind][id] = data;
   if (S.mode === "db") queueWrite(kind, id, data); else localSave();
+  gcProgramar();
   render();
 }
 function removeDoc(kind, id){
   delete S[kind][id];
   if (S.mode === "db") queueWrite(kind, id, null); else localSave();
+  gcProgramar();
   render();
 }
 
@@ -543,7 +546,7 @@ function vHoy(){
      <div class="sep"></div>
      <div style="flex:1;min-width:0">${destacado ? `<div class="lbl">${actual?"Atendiendo ahora":(esHoy?"Siguiente paciente":"Primera cita")}</div><div class="who">${esc(pacNombre(destacado.pacienteId))}</div><div class="sub">${esc(destacado.hora)} · ${esc(destacado.motivo||"Consulta")}</div>` : `<div class="lbl">${esHoy?"Por hoy":"Este día"}</div><div class="who">${!vivas.length ? "Sin citas agendadas" : pendientes.length ? `${pendientes.length} ${pendientes.length===1?"cita":"citas"} sin marcar como atendida` : "Todas las citas atendidas"}</div>${pendientes.length?`<div class="sub">Tócalas para actualizar su estado</div>`:""}`}</div>
    </div>`;
-  return `${notices()}
+  return `${notices()}${gcAviso()}
   <div class="top"><div><div class="eyebrow">${esc(fmtLong(hoy).replace(/^./,c=>c.toUpperCase()))}</div><h1>${saludo}, Dra. Valeria</h1></div></div>
   ${searchBox()}
   ${resumen}
@@ -606,8 +609,9 @@ function vAjustes(){
       <div class="sub" style="margin-bottom:12px">${local ? "Se guardan en este celular, dentro del navegador." : "Se guardan en tu cuenta de Claude."}</div>
       <div class="monthstats" style="margin:0"><div class="stat"><b class="num">${np}</b><span>pacientes</span></div><div class="stat"><b class="num">${nc}</b><span>citas</span></div></div></div>
     ${local ? `<div class="card"><h3 style="font-size:16px;margin-bottom:4px">Copia de seguridad</h3><div class="sub" style="margin-bottom:12px">Descarga una copia cada cierto tiempo y guárdala en Drive o WhatsApp. Con ella recuperas tus datos si cambias de celular o se borra el navegador.</div><div class="btnrow"><button class="btn sm primary" data-act="exportar">Descargar copia</button><button class="btn sm" data-act="importar">Restaurar copia</button></div><input type="file" id="importFile" accept=".json,application/json" hidden><div class="sub" style="margin-top:10px">${S.ultimaCopia?`Última copia: ${esc(S.ultimaCopia)}`:"Aún no has descargado ninguna copia."}</div></div>` : ""}
-    <div class="card"><h3 style="font-size:16px;margin-bottom:4px">Datos de ejemplo</h3><div class="sub" style="margin-bottom:12px">Pacientes y citas ficticios para probar la app. Al quitarlos, tus registros reales se quedan.</div>
-      ${hayDemo ? `<button class="btn sm danger" data-act="quitarDemo">Quitar datos de ejemplo</button>` : `<button class="btn sm soft" data-act="demo">Cargar datos de ejemplo</button>`}</div>
+    ${gcTarjeta()}
+    <div class="card"><h3 style="font-size:16px;margin-bottom:4px">Pacientes de prueba</h3><div class="sub" style="margin-bottom:12px">5 pacientes ficticios con citas en las próximas 2 semanas, para probar la app${gcConectado()?" y Google Calendar":""}. Al borrarlos se eliminan también sus citas${gcConectado()?", incluidas las de Google Calendar":""}. Tus pacientes reales no se tocan.</div>
+      ${hayDemo ? `<button class="btn sm danger" data-act="quitarDemo">Borrar pacientes de prueba</button>` : `<button class="btn sm soft" data-act="demo">Crear pacientes de prueba</button>`}</div>
   </div>`;
 }
 
@@ -1009,12 +1013,169 @@ document.addEventListener("click", e => {
   else if (a==="importar") $("#importFile").click();
   else if (a==="enviarPres") enviarPresupuesto();
   else if (a==="fijarInicial") confirmSheet("Guardar odontograma inicial", "Quedará fijo como el estado con el que llegó el paciente y ya no se podrá modificar. Los cambios siguientes se harán en Evolución.", "Guardar y fijar", () => { updPac(p => { const o = (p.odoInicial && p.odoInicial.odontograma) || {}; p.odoInicial = {odontograma:o, fijado:true, fecha:todayStr()}; p.odontograma = JSON.parse(JSON.stringify(o)); }); UI.odoModo = "evol"; toast("Odontograma inicial guardado"); });
+  else if (a==="gcConectar") gcConectar();
+  else if (a==="gcRenovar") gcRenovar();
+  else if (a==="gcSync") gcSincronizar();
+  else if (a==="gcDesconectar") confirmSheet("Desconectar Google Calendar", "Las citas que ya están en el calendario “Consultorio” se quedarán ahí, pero dejarán de actualizarse.", "Desconectar", gcDesconectar);
   else if (a==="demo") cargarDemo();
-  else if (a==="quitarDemo") confirmSheet("Quitar datos de ejemplo", "Se borrarán los pacientes y citas de ejemplo. Tus registros reales se quedan.", "Quitar", () => { Object.entries(S.citas).forEach(([id,c])=>{ if(c.demo) removeDoc("citas",id); }); Object.entries(S.pacientes).forEach(([id,p])=>{ if(p.demo) removeDoc("pacientes",id); }); toast("Datos de ejemplo quitados"); });
+  else if (a==="quitarDemo") confirmSheet("Borrar pacientes de prueba", "Se borrarán los pacientes de prueba y todas sus citas" + (gcConectado() ? ", también en Google Calendar" : "") + ". Tus pacientes reales se quedan.", "Borrar", () => { Object.entries(S.citas).forEach(([id,c])=>{ if(c.demo) removeDoc("citas",id); }); Object.entries(S.pacientes).forEach(([id,p])=>{ if(p.demo) removeDoc("pacientes",id); }); toast("Pacientes de prueba borrados"); });
 });
 /* espacio inferior exacto según la altura real de la barra */
 (function(){ const tb = document.querySelector(".tabbar"); const set = () => document.documentElement.style.setProperty("--tabh", tb.offsetHeight + "px"); set(); window.addEventListener("resize", set); if (window.ResizeObserver) new ResizeObserver(set).observe(tb); })();
 $("#fab").onclick = () => formCita({pacienteId: UI.route==="paciente" ? UI.pid : "", fecha: UI.route==="calendario" ? UI.calSel : (UI.route==="hoy" ? UI.dia : todayStr())});
+
+/* ---------- Google Calendar (una vía: app → calendario "Consultorio") ---------- */
+const GCAL_CLIENT_ID = "";   // ID de cliente OAuth de Google Cloud (pendiente de configurar)
+const GCAL_SCOPE = "https://www.googleapis.com/auth/calendar.app.created email";
+const GCAL_KEY = "ov-gcal";
+const GC = { estado: null, tokenClient: null, syncing: false, again: false, timer: null, error: "" };
+function gcLoad(){ try { return JSON.parse(localStorage.getItem(GCAL_KEY) || "null"); } catch(e){ return null; } }
+function gcSave(st){ try { localStorage.setItem(GCAL_KEY, JSON.stringify(st)); } catch(e){} }
+GC.estado = gcLoad();
+const gcDisponible = () => !!GCAL_CLIENT_ID && S.mode === "local" && /^https:$/.test(location.protocol);
+const gcConectado = () => !!(GC.estado && GC.estado.calendarId && !GC.estado.desconectado);
+const gcTokenVivo = () => !!(GC.estado && GC.estado.token && GC.estado.exp > Date.now() + 60000);
+function gcCargarScript(){
+  return new Promise((ok, mal) => {
+    if (window.google && google.accounts && google.accounts.oauth2) return ok();
+    const s = document.createElement("script"); s.src = "https://accounts.google.com/gsi/client"; s.async = true;
+    s.onload = () => ok(); s.onerror = () => mal(new Error("gsi")); document.head.appendChild(s);
+  });
+}
+async function gcPrepararCliente(){
+  await gcCargarScript();
+  if (!GC.tokenClient) GC.tokenClient = google.accounts.oauth2.initTokenClient({client_id: GCAL_CLIENT_ID, scope: GCAL_SCOPE, callback: () => {}});
+}
+/* Pide permiso a Google. Debe llamarse desde un toque de Valeria. */
+function gcPedirToken(hint){
+  return new Promise((ok, mal) => {
+    GC.tokenClient.callback = r => { if (r.error){ mal(new Error(r.error)); return; } ok(r); };
+    GC.tokenClient.error_callback = e => mal(new Error(e.type || "popup"));
+    GC.tokenClient.requestAccessToken({prompt: hint ? "" : "consent", login_hint: hint || undefined});
+  });
+}
+async function gcApi(method, path, body){
+  const r = await fetch("https://www.googleapis.com/calendar/v3/" + path, {method, headers: {"Authorization": "Bearer " + GC.estado.token, "Content-Type": "application/json"}, body: body ? JSON.stringify(body) : undefined});
+  if (r.status === 401){ GC.estado.exp = 0; gcSave(GC.estado); throw Object.assign(new Error("auth"), {status:401}); }
+  if (!r.ok && r.status !== 204) throw Object.assign(new Error("api " + r.status), {status: r.status});
+  return r.status === 204 ? null : r.json().catch(() => null);
+}
+async function gcConectar(){
+  if (!GCAL_CLIENT_ID){ toast("Falta configurar Google Calendar."); return; }
+  try {
+    await gcPrepararCliente();
+    const r = await gcPedirToken(GC.estado && GC.estado.email);
+    const st = GC.estado || {map:{}}; delete st.desconectado;
+    st.token = r.access_token; st.exp = Date.now() + (r.expires_in || 3600) * 1000; st.map ||= {};
+    GC.estado = st;
+    try { const u = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {headers:{Authorization:"Bearer "+st.token}}).then(x=>x.json()); if (u.email) st.email = u.email; } catch(e){}
+    // reutiliza el calendario si sigue existiendo; si no, crea "Consultorio"
+    let calOk = false;
+    if (st.calendarId){ try { await gcApi("GET", "calendars/" + encodeURIComponent(st.calendarId)); calOk = true; } catch(e){ if (e.status === 401) throw e; } }
+    if (!calOk){
+      const cal = await gcApi("POST", "calendars", {summary: "Consultorio", description: "Citas de OdontoVale", timeZone: "America/Lima"});
+      st.calendarId = cal.id; st.map = {}; st.desde = todayStr();
+      try { await gcApi("PATCH", "users/me/calendarList/" + encodeURIComponent(cal.id) + "?colorRgbFormat=true", {backgroundColor: "#8C6A4F", foregroundColor: "#FFFFFF"}); } catch(e){}
+    }
+    gcSave(st); GC.error = ""; render(); toast("Google Calendar conectado");
+    gcSincronizar();
+  } catch(e){
+    GC.error = "No se pudo conectar. Intenta de nuevo."; render();
+    if (!/popup_closed|access_denied/.test(e.message)) toast(GC.error);
+  }
+}
+function gcDesconectar(){
+  try { if (GC.estado && GC.estado.token && window.google) google.accounts.oauth2.revoke(GC.estado.token, () => {}); } catch(e){}
+  if (GC.estado){ delete GC.estado.token; delete GC.estado.exp; GC.estado.desconectado = true; gcSave(GC.estado); }
+  render(); toast("Google Calendar desconectado");
+}
+/* ID de evento fijo por cita: si algo se pierde, no se duplican */
+function gcEventId(citaId){ return "ov" + Array.from(new TextEncoder().encode(citaId)).map(b => b.toString(16).padStart(2,"0")).join(""); }
+function gcEvento(c){
+  const p = S.pacientes[c.pacienteId] || {};
+  const ini = minutes(c.hora), fin = ini + (Number(c.duracion) || 30);
+  const hm = m => `${pad(Math.floor(m/60) % 24)}:${pad(m % 60)}`;
+  const fechaFin = fin >= 1440 ? addDays(c.fecha, 1) : c.fecha;
+  const desc = [p.telefono ? "Teléfono: " + p.telefono : "", p.alergias ? "Alergias: " + p.alergias : "", c.notas ? "Notas: " + c.notas : "", c.estado === "atendida" ? "Estado: atendida" : "", "Agendada en OdontoVale"].filter(Boolean).join("\n");
+  return {
+    summary: `${c.estado === "atendida" ? "✓ " : ""}${p.nombre || "Paciente"} · ${c.motivo || "Consulta"}`,
+    description: desc,
+    start: {dateTime: `${c.fecha}T${hm(ini)}:00`, timeZone: "America/Lima"},
+    end: {dateTime: `${fechaFin}T${hm(fin)}:00`, timeZone: "America/Lima"},
+    status: "confirmed",
+  };
+}
+function gcProgramar(){ if (!gcConectado()) return; clearTimeout(GC.timer); GC.timer = setTimeout(gcSincronizar, 1200); }
+/* Deja el calendario igual a la app: crea, actualiza o borra lo necesario */
+async function gcSincronizar(){
+  if (!gcDisponible() || !gcConectado() || !gcTokenVivo()) { render(); return; }
+  if (GC.syncing){ GC.again = true; return; }
+  GC.syncing = true; GC.again = false;
+  const st = GC.estado; st.map ||= {};
+  try {
+    const deseadas = {};
+    for (const [id, c] of Object.entries(S.citas)){
+      if (!["programada","atendida"].includes(c.estado)) continue;
+      if (!st.map[id] && c.fecha < todayStr()) continue;
+      deseadas[id] = gcEvento(c);
+    }
+    const cal = "calendars/" + encodeURIComponent(st.calendarId) + "/events";
+    for (const [id, ev] of Object.entries(deseadas)){
+      const h = JSON.stringify(ev); const eid = gcEventId(id);
+      if (st.map[id] && st.map[id].h === h) continue;
+      try {
+        if (st.map[id]) await gcApi("PATCH", `${cal}/${eid}`, ev);
+        else await gcApi("POST", cal, {...ev, id: eid});
+      } catch(e){
+        if (e.status === 409 || e.status === 404 || e.status === 410){
+          if (e.status === 409) await gcApi("PATCH", `${cal}/${eid}`, ev); else await gcApi("POST", cal, {...ev, id: eid});
+        } else throw e;
+      }
+      st.map[id] = {h}; gcSave(st);
+    }
+    for (const id of Object.keys(st.map)){
+      if (deseadas[id]) continue;
+      try { await gcApi("DELETE", `${cal}/${gcEventId(id)}`); } catch(e){ if (![404,410].includes(e.status)) throw e; }
+      delete st.map[id]; gcSave(st);
+    }
+    st.ultima = Date.now(); GC.error = ""; gcSave(st);
+  } catch(e){
+    GC.error = e.status === 401 ? "" : "Algunos cambios no se enviaron. Se reintentará al abrir la app.";
+  } finally {
+    GC.syncing = false; render();
+    if (GC.again) gcProgramar();
+  }
+}
+/* Renovar permiso con un toque (Google lo pide cada cierto tiempo) */
+async function gcRenovar(){
+  try { await gcPrepararCliente(); const r = await gcPedirToken(GC.estado && GC.estado.email); GC.estado.token = r.access_token; GC.estado.exp = Date.now() + (r.expires_in || 3600) * 1000; gcSave(GC.estado); render(); gcSincronizar(); }
+  catch(e){ if (!/popup_closed|access_denied/.test(e.message)) toast("No se pudo renovar el permiso."); }
+}
+function gcPendientes(){
+  if (!gcConectado()) return 0; const st = GC.estado; let n = 0;
+  for (const [id, c] of Object.entries(S.citas)){ if (["programada","atendida"].includes(c.estado) && (st.map[id] || c.fecha >= todayStr())){ if (!st.map[id] || st.map[id].h !== JSON.stringify(gcEvento(c))) n++; } }
+  for (const id of Object.keys(st.map)){ const c = S.citas[id]; if (!c || !["programada","atendida"].includes(c.estado)) n++; }
+  return n;
+}
+function gcTarjeta(){
+  if (S.mode !== "local") return "";
+  const hace = t => { const m = Math.round((Date.now() - t) / 60000); return m < 1 ? "hace un momento" : m < 60 ? `hace ${m} min` : `hace ${Math.round(m/60)} h`; };
+  let body;
+  if (!GCAL_CLIENT_ID) body = `<div class="sub">Aún falta configurar la conexión con Google. Cuando esté lista, aquí aparecerá el botón para conectar tu cuenta.</div>`;
+  else if (!gcConectado()) body = `<div class="sub" style="margin-bottom:12px">Tus citas aparecerán en un calendario “Consultorio” de tu Google Calendar, con sus recordatorios. Los cambios se hacen aquí en la app; lo que borres o muevas en Google no cambia la app.</div><button class="btn sm primary" data-act="gcConectar">Conectar Google Calendar</button>`;
+  else {
+    const pend = gcPendientes();
+    body = `<div class="sub" style="margin-bottom:10px">Conectado${GC.estado.email ? " a <b>" + esc(GC.estado.email) + "</b>" : ""}<br>${GC.syncing ? "Sincronizando…" : pend ? `${pend} ${pend===1?"cambio pendiente":"cambios pendientes"} de enviar` : GC.estado.ultima ? "Al día · última sincronización " + hace(GC.estado.ultima) : "Listo"}</div>
+      ${GC.error ? `<div class="notice" style="margin-bottom:10px">${esc(GC.error)}</div>` : ""}
+      <div class="btnrow">${gcTokenVivo() ? `<button class="btn sm soft" data-act="gcSync">Sincronizar ahora</button>` : `<button class="btn sm primary" data-act="gcRenovar">Continuar sincronizando</button>`}<button class="btn sm" data-act="gcDesconectar">Desconectar</button></div>
+      ${gcTokenVivo() ? "" : `<div class="sub" style="font-size:12px;margin-top:8px">Google pide confirmar el permiso cada cierto tiempo. Toca “Continuar sincronizando”.</div>`}`;
+  }
+  return `<div class="card"><h3 style="font-size:16px;margin-bottom:4px;display:flex;align-items:center;gap:8px"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>Google Calendar</h3>${body}</div>`;
+}
+function gcAviso(){
+  if (!gcDisponible() || !gcConectado() || gcTokenVivo() || !gcPendientes()) return "";
+  return `<button class="notice gcaviso" data-act="gcRenovar">Hay citas sin enviar a Google Calendar. <b>Toca para continuar sincronizando.</b></button>`;
+}
 
 /* ---------- presupuesto en PDF ---------- */
 function logoPNG(){
@@ -1135,19 +1296,20 @@ async function cargarDemo(){
     {id:"pdemo4", nombre:"Jorge Mendoza Paredes", dni:"09876543", nacimiento:"1967-11-02", telefono:"981 004 552", alergias:"Látex", antecedentes:"Diabetes tipo 2."},
     {id:"pdemo5", nombre:"Andrea Salazar Vega", dni:"70011234", nacimiento:"1999-06-25", telefono:"923 818 090"},
   ];
-  const C = [
+  const C = [  // todas dentro de 2 semanas (pasadas y futuras)
     ["pdemo3",h,"09:00",30,"Control de ortodoncia"],["pdemo1",h,"10:30",45,"Curación"],["pdemo4",h,"12:00",60,"Evaluación"],["pdemo5",h,"16:00",30,"Limpieza"],
-    ["pdemo2",addDays(h,1),"11:00",60,"Prótesis"],["pdemo4",addDays(h,3),"09:30",45,"Extracción"],["pdemo1",addDays(h,9),"17:00",60,"Extracción"],
-    ["pdemo5",addDays(h,-5),"15:00",30,"Evaluación","atendida"],["pdemo2",addDays(h,-12),"10:00",45,"Evaluación","atendida"],["pdemo1",addDays(h,-14),"18:00",30,"Evaluación","atendida"],
-    ["pdemo1",addMonths(h,-6),"09:00",45,"Limpieza","atendida"],["pdemo1",addMonths(h,6),"09:00",45,"Limpieza"],["pdemo3",addMonths(h,1),"09:00",30,"Control de ortodoncia"],["pdemo4",addDays(h,-20),"11:00",30,"Evaluación","no_asistio"],
+    ["pdemo2",addDays(h,1),"11:00",60,"Prótesis"],["pdemo4",addDays(h,3),"09:30",45,"Extracción"],["pdemo1",addDays(h,9),"17:00",60,"Extracción"],["pdemo3",addDays(h,12),"09:00",30,"Control de ortodoncia"],["pdemo5",addDays(h,14),"15:30",30,"Control"],
+    ["pdemo5",addDays(h,-5),"15:00",30,"Evaluación","atendida"],["pdemo2",addDays(h,-12),"10:00",45,"Evaluación","atendida"],["pdemo1",addDays(h,-14),"18:00",30,"Evaluación","atendida"],["pdemo4",addDays(h,-8),"11:00",30,"Evaluación","no_asistio"],
   ];
   for (const p of P){ const {id, ...d} = p; d.demo = true; d.creado = Date.now(); save("pacientes", id, d); }
   C.forEach(([pid,fecha,hora,duracion,motivo,estado],i) => save("citas", "cdemo"+i, {pacienteId:pid, fecha, hora, duracion, motivo, estado:estado||"programada", notas:"", demo:true, creado:Date.now()}));
-  toast("Datos de ejemplo cargados");
+  toast("Pacientes de prueba creados");
 }
 
 readHash();
-boot();
+boot().then(() => { if (gcConectado()) gcSincronizar(); });
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && gcConectado()) gcSincronizar(); });
+window.addEventListener("online", () => { if (gcConectado()) gcSincronizar(); });
 </script>
 </body>
 </html>
