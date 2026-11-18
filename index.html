@@ -344,7 +344,7 @@ setTimeout(function(){s.classList.add("out");document.documentElement.classList.
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
 <script>
 /* Actualización automática: al abrir o volver a la app, si hay una versión nueva se recarga sola */
-const APP_VERSION = "2026.11.18-1012";
+const APP_VERSION = "2026.11.18-1016";
 let recargaPendiente = false;
 async function buscarActualizacion(){
   if (!/^https?:$/.test(location.protocol) || (window.claude && typeof window.claude.use === "function")) return;
@@ -1067,7 +1067,7 @@ async function gcConectar(){
     await gcPrepararCliente();
     const r = await gcPedirToken(GC.estado && GC.estado.email);
     const st = GC.estado || {map:{}}; delete st.desconectado;
-    st.token = r.access_token; st.exp = Date.now() + (r.expires_in || 3600) * 1000; st.map ||= {};
+    st.token = r.access_token; st.exp = Date.now() + (r.expires_in || 3600) * 1000; st.map ||= {}; st.scopes = r.scope || ""; delete st.color;
     GC.estado = st;
     try { const u = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {headers:{Authorization:"Bearer "+st.token}}).then(x=>x.json()); if (u.email) st.email = u.email; } catch(e){}
     // reutiliza el calendario si sigue existiendo; si no, crea "Consultorio"
@@ -1151,7 +1151,7 @@ async function gcSincronizar(){
 }
 /* Renovar permiso con un toque (Google lo pide cada cierto tiempo) */
 async function gcRenovar(){
-  try { await gcPrepararCliente(); const r = await gcPedirToken(GC.estado && GC.estado.email); GC.estado.token = r.access_token; GC.estado.exp = Date.now() + (r.expires_in || 3600) * 1000; gcSave(GC.estado); render(); gcSincronizar(); }
+  try { await gcPrepararCliente(); const r = await gcPedirToken(GC.estado && GC.estado.email); GC.estado.token = r.access_token; GC.estado.exp = Date.now() + (r.expires_in || 3600) * 1000; if (r.scope) GC.estado.scopes = r.scope; gcSave(GC.estado); render(); gcSincronizar(); }
   catch(e){ if (!/popup_closed|access_denied/.test(e.message)) toast("No se pudo renovar el permiso."); }
 }
 function gcPendientes(){
@@ -1170,6 +1170,7 @@ function gcTarjeta(){
     const pend = gcPendientes();
     body = `<div class="sub" style="margin-bottom:10px">Conectado${GC.estado.email ? " a <b>" + esc(GC.estado.email) + "</b>" : ""}<br>${GC.syncing ? "Sincronizando…" : pend ? `${pend} ${pend===1?"cambio pendiente":"cambios pendientes"} de enviar` : GC.estado.ultima ? "Al día · última sincronización " + hace(GC.estado.ultima) : "Listo"}</div>
       ${GC.error ? `<div class="notice" style="margin-bottom:10px">${esc(GC.error)}</div>` : ""}
+      ${GC.estado.color !== GCAL_COLOR.backgroundColor && !/calendarlist/.test(GC.estado.scopes || "") ? `<div class="notice" style="margin-bottom:10px">Para que el calendario use el color crema, toca <b>Desconectar</b> y luego <b>Conectar Google Calendar</b>, y acepta todos los permisos.</div>` : ""}
       <div class="btnrow">${gcTokenVivo() ? `<button class="btn sm soft" data-act="gcSync">Sincronizar ahora</button>` : `<button class="btn sm primary" data-act="gcRenovar">Continuar sincronizando</button>`}<button class="btn sm" data-act="gcDesconectar">Desconectar</button></div>
       ${gcTokenVivo() ? "" : `<div class="sub" style="font-size:12px;margin-top:8px">Google pide confirmar el permiso cada cierto tiempo. Toca “Continuar sincronizando”.</div>`}`;
   }
