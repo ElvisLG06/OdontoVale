@@ -344,7 +344,7 @@ setTimeout(function(){s.classList.add("out");document.documentElement.classList.
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
 <script>
 /* Actualización automática: al abrir o volver a la app, si hay una versión nueva se recarga sola */
-const APP_VERSION = "2026.11.18-1016";
+const APP_VERSION = "2026.11.18-1019";
 let recargaPendiente = false;
 async function buscarActualizacion(){
   if (!/^https?:$/.test(location.protocol) || (window.claude && typeof window.claude.use === "function")) return;
@@ -1048,11 +1048,11 @@ async function gcPrepararCliente(){
   if (!GC.tokenClient) GC.tokenClient = google.accounts.oauth2.initTokenClient({client_id: GCAL_CLIENT_ID, scope: GCAL_SCOPE, callback: () => {}});
 }
 /* Pide permiso a Google. Debe llamarse desde un toque de Valeria. */
-function gcPedirToken(hint){
+function gcPedirToken(hint, forzar){
   return new Promise((ok, mal) => {
     GC.tokenClient.callback = r => { if (r.error){ mal(new Error(r.error)); return; } ok(r); };
     GC.tokenClient.error_callback = e => mal(new Error(e.type || "popup"));
-    GC.tokenClient.requestAccessToken({prompt: hint ? "" : "consent", login_hint: hint || undefined});
+    GC.tokenClient.requestAccessToken({prompt: (forzar || !hint) ? "consent" : "", login_hint: hint || undefined});
   });
 }
 async function gcApi(method, path, body){
@@ -1065,7 +1065,7 @@ async function gcConectar(){
   if (!GCAL_CLIENT_ID){ toast("Falta configurar Google Calendar."); return; }
   try {
     await gcPrepararCliente();
-    const r = await gcPedirToken(GC.estado && GC.estado.email);
+    const r = await gcPedirToken(GC.estado && GC.estado.email, true);
     const st = GC.estado || {map:{}}; delete st.desconectado;
     st.token = r.access_token; st.exp = Date.now() + (r.expires_in || 3600) * 1000; st.map ||= {}; st.scopes = r.scope || ""; delete st.color;
     GC.estado = st;
