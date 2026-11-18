@@ -344,7 +344,7 @@ setTimeout(function(){s.classList.add("out");document.documentElement.classList.
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
 <script>
 /* Actualización automática: al abrir o volver a la app, si hay una versión nueva se recarga sola */
-const APP_VERSION = "2026.11.18-1006";
+const APP_VERSION = "2026.11.18-1012";
 let recargaPendiente = false;
 async function buscarActualizacion(){
   if (!/^https?:$/.test(location.protocol) || (window.claude && typeof window.claude.use === "function")) return;
@@ -1026,7 +1026,8 @@ $("#fab").onclick = () => formCita({pacienteId: UI.route==="paciente" ? UI.pid :
 
 /* ---------- Google Calendar (una vía: app → calendario "Consultorio") ---------- */
 const GCAL_CLIENT_ID = "420021930532-ql859se5rf2u6ar12cec85fgo2esvqoj.apps.googleusercontent.com";   // ID de cliente OAuth de Google Cloud (pendiente de configurar)
-const GCAL_SCOPE = "https://www.googleapis.com/auth/calendar.app.created email";
+const GCAL_SCOPE = "https://www.googleapis.com/auth/calendar.app.created https://www.googleapis.com/auth/calendar.calendarlist email";
+const GCAL_COLOR = {backgroundColor: "#EFE5D7", foregroundColor: "#33291F"};  // crema de la app con texto oscuro
 const GCAL_KEY = "ov-gcal";
 const GC = { estado: null, tokenClient: null, syncing: false, again: false, timer: null, error: "" };
 function gcLoad(){ try { return JSON.parse(localStorage.getItem(GCAL_KEY) || "null"); } catch(e){ return null; } }
@@ -1075,7 +1076,6 @@ async function gcConectar(){
     if (!calOk){
       const cal = await gcApi("POST", "calendars", {summary: "Consultorio", description: "Citas de OdontoVale", timeZone: "America/Lima"});
       st.calendarId = cal.id; st.map = {}; st.desde = todayStr();
-      try { await gcApi("PATCH", "users/me/calendarList/" + encodeURIComponent(cal.id) + "?colorRgbFormat=true", {backgroundColor: "#8C6A4F", foregroundColor: "#FFFFFF"}); } catch(e){}
     }
     gcSave(st); GC.error = ""; render(); toast("Google Calendar conectado");
     gcSincronizar();
@@ -1118,6 +1118,9 @@ async function gcSincronizar(){
       if (!["programada","atendida"].includes(c.estado)) continue;
       if (!st.map[id] && c.fecha < todayStr()) continue;
       deseadas[id] = gcEvento(c);
+    }
+    if (st.color !== GCAL_COLOR.backgroundColor){
+      try { await gcApi("PATCH", "users/me/calendarList/" + encodeURIComponent(st.calendarId) + "?colorRgbFormat=true", GCAL_COLOR); st.color = GCAL_COLOR.backgroundColor; gcSave(st); } catch(e){ if (e.status === 401) throw e; }
     }
     const cal = "calendars/" + encodeURIComponent(st.calendarId) + "/events";
     for (const [id, ev] of Object.entries(deseadas)){
