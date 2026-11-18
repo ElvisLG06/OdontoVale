@@ -344,7 +344,7 @@ setTimeout(function(){s.classList.add("out");document.documentElement.classList.
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
 <script>
 /* Actualización automática: al abrir o volver a la app, si hay una versión nueva se recarga sola */
-const APP_VERSION = "2026.11.17-1328";
+const APP_VERSION = "2026.11.18-1006";
 let recargaPendiente = false;
 async function buscarActualizacion(){
   if (!/^https?:$/.test(location.protocol) || (window.claude && typeof window.claude.use === "function")) return;
@@ -1025,7 +1025,7 @@ document.addEventListener("click", e => {
 $("#fab").onclick = () => formCita({pacienteId: UI.route==="paciente" ? UI.pid : "", fecha: UI.route==="calendario" ? UI.calSel : (UI.route==="hoy" ? UI.dia : todayStr())});
 
 /* ---------- Google Calendar (una vía: app → calendario "Consultorio") ---------- */
-const GCAL_CLIENT_ID = "";   // ID de cliente OAuth de Google Cloud (pendiente de configurar)
+const GCAL_CLIENT_ID = "420021930532-ql859se5rf2u6ar12cec85fgo2esvqoj.apps.googleusercontent.com";   // ID de cliente OAuth de Google Cloud (pendiente de configurar)
 const GCAL_SCOPE = "https://www.googleapis.com/auth/calendar.app.created email";
 const GCAL_KEY = "ov-gcal";
 const GC = { estado: null, tokenClient: null, syncing: false, again: false, timer: null, error: "" };
