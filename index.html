@@ -85,6 +85,7 @@ html{background:#F8F3EC}
 html{min-height:100%;margin:0}
 html.listo{background:#FFFFFF}
 body{min-height:100%;margin:0}
+html,body{overflow-x:clip}
 body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
@@ -277,10 +278,12 @@ a.btn{text-decoration:none;color:var(--ink)}
 
 /* hojas */
 .scrim{position:fixed;inset:0;background:rgba(40,28,18,.32);z-index:50;display:flex;align-items:flex-end;justify-content:center;animation:fade .18s ease}
-.sheet{background:var(--bg);width:100%;max-width:520px;max-height:92%;border-radius:22px 22px 0 0;display:flex;flex-direction:column;animation:up .22s ease}
+.scrim{overscroll-behavior:none;touch-action:none}
+.sheet{background:var(--bg);width:100%;max-width:520px;max-height:92%;overflow:hidden;border-radius:22px 22px 0 0;display:flex;flex-direction:column;animation:up .22s ease}
 .sheet .hd{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 10px;border-bottom:1px solid var(--line)}
 .sheet .hd h2{font-size:19px}
-.sheet .bd{padding:14px 18px calc(env(safe-area-inset-bottom) + 18px);overflow-y:auto}
+.sheet .bd{padding:14px 18px max(16px, env(safe-area-inset-bottom));overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;touch-action:pan-y;-webkit-overflow-scrolling:touch}
+.sheet .bd > *:last-child{margin-bottom:0}
 .grab{width:40px;height:4px;border-radius:4px;background:var(--beige);margin:8px auto 0}
 @keyframes up{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
 @keyframes fade{from{opacity:0}to{opacity:1}}
@@ -294,7 +297,10 @@ a.btn{text-decoration:none;color:var(--ink)}
 .delbtn{color:var(--warn);font-size:13px;padding:6px 0;align-self:center;text-decoration:underline;text-underline-offset:3px}
 form .f{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
 form .f.resalta input{border-color:var(--accent);background:var(--accent-soft)}
-form .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+form .two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+form .two > *{min-width:0}
+input[type=date],input[type=time]{-webkit-appearance:none;appearance:none;display:block;min-width:0;max-width:100%;text-align:left;line-height:24px}
+input[type=date]::-webkit-date-and-time-value,input[type=time]::-webkit-date-and-time-value{text-align:left;margin:0}
 label{font-size:12px;font-weight:700;color:var(--muted)}
 input[type=text],input[type=tel],input[type=email],input[type=date],input[type=time],input[type=number],input:not([type]),select,textarea{width:100%;min-height:46px;border:1px solid var(--line);border-radius:12px;background:var(--sand);padding:10px 12px;font-size:16px}
 textarea{min-height:90px;resize:vertical}
@@ -344,7 +350,7 @@ setTimeout(function(){s.classList.add("out");document.documentElement.classList.
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
 <script>
 /* Actualización automática: al abrir o volver a la app, si hay una versión nueva se recarga sola */
-const APP_VERSION = "2026.11.18-1025";
+const APP_VERSION = "2026.11.18-1040";
 let recargaPendiente = false;
 async function buscarActualizacion(){
   if (!/^https?:$/.test(location.protocol) || (window.claude && typeof window.claude.use === "function")) return;
@@ -818,6 +824,17 @@ function openSheet(title, body, onMount){
   sheetEl.addEventListener("click", e => { if (e.target === sheetEl || e.target.closest("[data-close]")) closeSheet(); });
   document.body.appendChild(sheetEl);
   document.body.style.overflow = "hidden";
+  // solo se desliza el contenido, en vertical y dentro de sus límites
+  let x0 = 0, y0 = 0;
+  sheetEl.addEventListener("touchstart", e => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, {passive:true});
+  sheetEl.addEventListener("touchmove", e => {
+    if (e.touches.length > 1) { e.preventDefault(); return; }
+    const dx = e.touches[0].clientX - x0, dy = e.touches[0].clientY - y0;
+    const bd = e.target.closest(".bd");
+    if (Math.abs(dx) > Math.abs(dy)) { e.preventDefault(); return; }
+    if (!bd || bd.scrollHeight <= bd.clientHeight + 1) { e.preventDefault(); return; }
+    if ((bd.scrollTop <= 0 && dy > 0) || (bd.scrollTop + bd.clientHeight >= bd.scrollHeight - 1 && dy < 0)) e.preventDefault();
+  }, {passive:false});
   onMount && onMount($(".bd", sheetEl));
 }
 function closeSheet(){ if (sheetEl){ sheetEl.remove(); sheetEl = null; document.body.style.overflow = ""; if (recargaPendiente) location.reload(); } }
@@ -869,7 +886,7 @@ function formCita(opts={}){
     <div class="f"><label for="cf-pq">Paciente *</label><div id="cf-pick">${picker()}</div></div>
     <div class="two"><div class="f"><label for="cf-fecha">Fecha</label><input id="cf-fecha" type="date" value="${esc(c.fecha)}"></div><div class="f"><label for="cf-hora">Hora</label><input id="cf-hora" type="time" step="900" value="${esc(c.hora)}"></div></div>
     <div class="f"><label>Duración</label><div class="chips" id="cf-dur">${[30,45,60,90].map(d=>`<button type="button" class="chip ${+c.duracion===d?"on":""}" data-d="${d}">${d} min</button>`).join("")}</div></div>
-    <div class="f"><label for="cf-motivo">Motivo</label><div class="chips" id="cf-mots" style="margin-bottom:6px">${MOTIVOS.map(m=>`<button type="button" class="chip ${c.motivo===m?"on":""}" data-m="${m}">${m}</button>`).join("")}</div><input id="cf-motivo" value="${esc(c.motivo)}" placeholder="U otro motivo"></div>
+    <div class="f"><label for="cf-motivo">Motivo</label><div class="chips" id="cf-mots" style="margin-bottom:8px;justify-content:center">${MOTIVOS.map(m=>`<button type="button" class="chip ${c.motivo===m?"on":""}" data-m="${m}">${m}</button>`).join("")}</div><input id="cf-motivo" value="${esc(c.motivo)}" placeholder="U otro motivo"></div>
     <div class="f"><label for="cf-notas">Notas</label><textarea id="cf-notas" placeholder="Opcional">${esc(c.notas||"")}</textarea></div>
     <button class="btn primary block" type="submit">${opts.id?"Guardar cambios":"Agendar cita"}</button></form>`, bd => {
       let dur = +c.duracion || 30;
@@ -1174,7 +1191,7 @@ function gcTarjeta(){
     const pend = gcPendientes();
     body = `<div class="sub" style="margin-bottom:10px">Conectado${GC.estado.email ? " a <b>" + esc(GC.estado.email) + "</b>" : ""}<br>${GC.syncing ? "Sincronizando…" : pend ? `${pend} ${pend===1?"cambio pendiente":"cambios pendientes"} de enviar` : GC.estado.ultima ? "Al día · última sincronización " + hace(GC.estado.ultima) : "Listo"}</div>
       ${GC.error ? `<div class="notice" style="margin-bottom:10px">${esc(GC.error)}</div>` : ""}
-      ${GC.estado.colorErr ? `<div class="notice" style="margin-bottom:10px">Google no aceptó el cambio de color (${esc(GC.estado.colorErr)}).</div>` : GC.estado.color === GCAL_COLOR.backgroundColor ? `<div class="sub" style="font-size:12px;margin:-4px 0 10px">Color crema aplicado. Si en Google Calendar aún se ve de otro color, recarga la página.</div>` : ""}
+      ${GC.estado.colorErr ? `<div class="notice" style="margin-bottom:10px">Google no aceptó el cambio de color (${esc(GC.estado.colorErr)}).</div>` : ""}
       ${GC.estado.color !== GCAL_COLOR.backgroundColor && !GC.estado.colorErr && !/calendarlist/.test(GC.estado.scopes || "") ? `<div class="notice" style="margin-bottom:10px">Para que el calendario use el color crema, toca <b>Desconectar</b> y luego <b>Conectar Google Calendar</b>, y acepta todos los permisos.</div>` : ""}
       <div class="btnrow">${gcTokenVivo() ? `<button class="btn sm soft" data-act="gcSync">Sincronizar ahora</button>` : `<button class="btn sm primary" data-act="gcRenovar">Continuar sincronizando</button>`}<button class="btn sm" data-act="gcDesconectar">Desconectar</button></div>
       ${gcTokenVivo() ? "" : `<div class="sub" style="font-size:12px;margin-top:8px">Google pide confirmar el permiso cada cierto tiempo. Toca “Continuar sincronizando”.</div>`}`;
