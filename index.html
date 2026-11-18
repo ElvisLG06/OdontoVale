@@ -350,7 +350,7 @@ setTimeout(function(){s.classList.add("out");document.documentElement.classList.
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
 <script>
 /* Actualización automática: al abrir o volver a la app, si hay una versión nueva se recarga sola */
-const APP_VERSION = "2026.11.18-1040";
+const APP_VERSION = "2026.11.18-1041";
 let recargaPendiente = false;
 async function buscarActualizacion(){
   if (!/^https?:$/.test(location.protocol) || (window.claude && typeof window.claude.use === "function")) return;
@@ -507,7 +507,17 @@ function render(){
   else if (UI.route === "pacientes") html = vPacientes();
   else if (UI.route === "paciente") html = vPerfil();
   else if (UI.route === "ajustes") html = vAjustes();
+  const tabsPrev = $(".tabs"); const tabsLeft = tabsPrev ? tabsPrev.scrollLeft : 0;
   app.innerHTML = html;
+  // conserva la posición de las pestañas del perfil y deja visible la elegida
+  const tabsNew = $(".tabs");
+  if (tabsNew){
+    tabsNew.scrollLeft = tabsLeft;
+    const on = tabsNew.querySelector("button.on");
+    if (on){ const l = on.offsetLeft - tabsNew.offsetLeft, r = l + on.offsetWidth;
+      if (l < tabsNew.scrollLeft + 18) tabsNew.scrollLeft = Math.max(0, l - 18);
+      else if (r > tabsNew.scrollLeft + tabsNew.clientWidth - 18) tabsNew.scrollLeft = r - tabsNew.clientWidth + 18; }
+  }
   if (fid){ const el = document.getElementById(fid); if (el && el.focus){ el.focus(); try{ el.setSelectionRange(sel, sel); }catch(e){} } }
 }
 
