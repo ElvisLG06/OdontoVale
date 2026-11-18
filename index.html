@@ -344,7 +344,7 @@ setTimeout(function(){s.classList.add("out");document.documentElement.classList.
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
 <script>
 /* Actualización automática: al abrir o volver a la app, si hay una versión nueva se recarga sola */
-const APP_VERSION = "2026.11.18-1019";
+const APP_VERSION = "2026.11.18-1022";
 let recargaPendiente = false;
 async function buscarActualizacion(){
   if (!/^https?:$/.test(location.protocol) || (window.claude && typeof window.claude.use === "function")) return;
@@ -1058,7 +1058,7 @@ function gcPedirToken(hint, forzar){
 async function gcApi(method, path, body){
   const r = await fetch("https://www.googleapis.com/calendar/v3/" + path, {method, headers: {"Authorization": "Bearer " + GC.estado.token, "Content-Type": "application/json"}, body: body ? JSON.stringify(body) : undefined});
   if (r.status === 401){ GC.estado.exp = 0; gcSave(GC.estado); throw Object.assign(new Error("auth"), {status:401}); }
-  if (!r.ok && r.status !== 204) throw Object.assign(new Error("api " + r.status), {status: r.status});
+  if (!r.ok && r.status !== 204){ let detalle = ""; try { const j = await r.json(); detalle = (j.error && (j.error.message || j.error.status)) || ""; } catch(e){} throw Object.assign(new Error("api " + r.status), {status: r.status, detalle}); }
   return r.status === 204 ? null : r.json().catch(() => null);
 }
 async function gcConectar(){
@@ -1120,7 +1120,8 @@ async function gcSincronizar(){
       deseadas[id] = gcEvento(c);
     }
     if (st.color !== GCAL_COLOR.backgroundColor){
-      try { await gcApi("PATCH", "users/me/calendarList/" + encodeURIComponent(st.calendarId) + "?colorRgbFormat=true", GCAL_COLOR); st.color = GCAL_COLOR.backgroundColor; gcSave(st); } catch(e){ if (e.status === 401) throw e; }
+      try { await gcApi("PATCH", "users/me/calendarList/" + encodeURIComponent(st.calendarId) + "?colorRgbFormat=true", GCAL_COLOR); st.color = GCAL_COLOR.backgroundColor; delete st.colorErr; gcSave(st); }
+      catch(e){ if (e.status === 401) throw e; st.colorErr = (e.status || "red") + (e.detalle ? " · " + e.detalle : ""); gcSave(st); }
     }
     const cal = "calendars/" + encodeURIComponent(st.calendarId) + "/events";
     for (const [id, ev] of Object.entries(deseadas)){
@@ -1170,7 +1171,8 @@ function gcTarjeta(){
     const pend = gcPendientes();
     body = `<div class="sub" style="margin-bottom:10px">Conectado${GC.estado.email ? " a <b>" + esc(GC.estado.email) + "</b>" : ""}<br>${GC.syncing ? "Sincronizando…" : pend ? `${pend} ${pend===1?"cambio pendiente":"cambios pendientes"} de enviar` : GC.estado.ultima ? "Al día · última sincronización " + hace(GC.estado.ultima) : "Listo"}</div>
       ${GC.error ? `<div class="notice" style="margin-bottom:10px">${esc(GC.error)}</div>` : ""}
-      ${GC.estado.color !== GCAL_COLOR.backgroundColor && !/calendarlist/.test(GC.estado.scopes || "") ? `<div class="notice" style="margin-bottom:10px">Para que el calendario use el color crema, toca <b>Desconectar</b> y luego <b>Conectar Google Calendar</b>, y acepta todos los permisos.</div>` : ""}
+      ${GC.estado.colorErr ? `<div class="notice" style="margin-bottom:10px">Google no aceptó el cambio de color (${esc(GC.estado.colorErr)}).</div>` : GC.estado.color === GCAL_COLOR.backgroundColor ? `<div class="sub" style="font-size:12px;margin:-4px 0 10px">Color crema aplicado. Si en Google Calendar aún se ve de otro color, recarga la página.</div>` : ""}
+      ${GC.estado.color !== GCAL_COLOR.backgroundColor && !GC.estado.colorErr && !/calendarlist/.test(GC.estado.scopes || "") ? `<div class="notice" style="margin-bottom:10px">Para que el calendario use el color crema, toca <b>Desconectar</b> y luego <b>Conectar Google Calendar</b>, y acepta todos los permisos.</div>` : ""}
       <div class="btnrow">${gcTokenVivo() ? `<button class="btn sm soft" data-act="gcSync">Sincronizar ahora</button>` : `<button class="btn sm primary" data-act="gcRenovar">Continuar sincronizando</button>`}<button class="btn sm" data-act="gcDesconectar">Desconectar</button></div>
       ${gcTokenVivo() ? "" : `<div class="sub" style="font-size:12px;margin-top:8px">Google pide confirmar el permiso cada cierto tiempo. Toca “Continuar sincronizando”.</div>`}`;
   }
